@@ -289,17 +289,73 @@ class CreditsSection {
             return;
         }
 
+        // Agregar estilos para el modal y la tabla de historial
+        if (!document.getElementById('credit-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'credit-styles';
+            styles.textContent = `
+                .modal {
+                    display: flex;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                }
+                .modal-content {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    max-width: 80%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                .credit-history {
+                    margin: 20px 0;
+                }
+                .credit-history table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .credit-history th, .credit-history td {
+                    padding: 10px;
+                    text-align: left;
+                    border-bottom: 1px solid #ddd;
+                }
+                .credit-history .debit {
+                    background-color: #ffe6e6;
+                }
+                .credit-history .credit {
+                    background-color: #e6ffe6;
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+
         tbody.innerHTML = '';
 
+        // Agregar botón para nuevo cliente
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <td colspan="5" class="text-right" style="padding: 10px;">
+                <button class="btn btn-primary" onclick="CreditsSection.addClient()">
+                    ➕ Agregar Cliente
+                </button>
+            </td>
+        `;
+        tbody.appendChild(headerRow);
+
         if (Object.keys(credits).length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px; color: #666;">
-                        <div style="font-size: 2rem; margin-bottom: 10px;">💳</div>
-                        <strong>No hay créditos pendientes</strong><br>
-                        <small>Todos los clientes están al día con sus pagos</small>
-                    </td>
-                </tr>
+            tbody.appendChild(document.createElement('tr')).innerHTML = `
+                <td colspan="5" style="text-align: center; padding: 20px; color: #666;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">💳</div>
+                    <strong>No hay créditos pendientes</strong><br>
+                    <small>Todos los clientes están al día con sus pagos</small>
+                </td>
             `;
             return;
         }
@@ -368,35 +424,106 @@ class CreditsSection {
         if (!amount || isNaN(amount) || amount <= 0) return;
 
         try {
+            // Verificar que el monto no exceda la deuda
+            if (amount > credit.total) {
+                showNotification('❌ El monto excede la deuda pendiente', 'error');
+                return;
+            }
+
             const newTotal = credit.total - amount;
-            await firebaseOperations.addCredit(clientKey, {
+            await firebaseOperations.updateCredit(clientKey, {
                 total: newTotal,
                 lastDate: new Date().toISOString().slice(0, 10),
-                history: [...(credit.history || []), { amount: -amount, date: new Date().toISOString().slice(0, 10) }]
+                history: [...(credit.history || []), { 
+                    amount: -amount, 
+                    date: new Date().toISOString().slice(0, 10),
+                    type: 'payment'
+                }]
+            });
+
+            // Actualizar el dinero en caja
+            const currentCash = cashRegister.total || 0;
+            await firebaseOperations.updateCashRegister({
+                total: currentCash + amount,
+                lastUpdate: new Date().toISOString()
             });
 
             showNotification('💰 Pago registrado exitosamente');
             this.render();
+            CashRegister.render(); // Actualizar la vista de la caja
         } catch (error) {
+            console.error('Error al procesar el pago:', error);
             showNotification('❌ Error al procesar pago: ' + error.message, 'error');
+        }
+    }
+
+    static async addClient() {
+        const name = prompt('Nombre del cliente:');
+        if (!name) return;
+
+        const phone = prompt('Teléfono del cliente (opcional):');
+
+        try {
+            const clientData = {
+                name,
+                phone: phone || '',
+                createdAt: new Date().toISOString()
+            };
+
+            const clientRef = await firebaseOperations.addClient(clientData);
+            showNotification('✅ Cliente agregado exitosamente');
+            this.render();
+        } catch (error) {
+            console.error('Error al agregar cliente:', error);
+            showNotification('❌ Error al agregar cliente: ' + error.message, 'error');
         }
     }
 
     static viewHistory(clientKey) {
         const credit = credits[clientKey];
+        const client = clients[clientKey];
         if (!credit || !credit.history) {
-            alert('No hay historial disponible para este cliente');
+            showNotification('❌ No hay historial disponible para este cliente', 'error');
             return;
         }
 
-        let historyText = 'Historial de crédito:\n\n';
-        credit.history.forEach(entry => {
-            const type = entry.amount > 0 ? 'Compra' : 'Pago';
-            const amount = Math.abs(entry.amount);
-            historyText += `${entry.date}: ${type} $${amount.toFixed(2)}\n`;
-        });
+        // Crear modal para mostrar el historial
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Historial de Crédito - ${client.name}</h3>
+                <div class="credit-history">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Monto</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${credit.history.map(entry => {
+                                const type = entry.amount > 0 ? '💳 Compra' : '💰 Pago';
+                                const amount = Math.abs(entry.amount);
+                                return `
+                                    <tr class="${entry.amount > 0 ? 'debit' : 'credit'}">
+                                        <td>${entry.date}</td>
+                                        <td>${type}</td>
+                                        <td>$${amount.toFixed(2)}</td>
+                                        <td>$${entry.balance ? entry.balance.toFixed(2) : 'N/A'}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="btn btn-primary">Cerrar</button>
+            </div>
+        `;
 
-        alert(historyText);
+        document.body.appendChild(modal);
     }
 
     static showAddPaymentModal() {
@@ -800,18 +927,7 @@ class CashRegister {
     }
 }
 
-// Funciones de utilidad
-function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    if (notification) {
-        notification.textContent = message;
-        notification.className = `notification show ${type}`;
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
-    }
-}
+// La función showNotification ya está definida al inicio del archivo, eliminamos la duplicación
 
 // Exponer funciones globales
 window.InventorySection = InventorySection;

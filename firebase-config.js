@@ -84,6 +84,18 @@ export const firebaseOperations = {
 
     updateCredit: (clientKey, updates) => {
         return update(ref(db, 'credits/' + clientKey), updates);
+    },
+
+    // Caja Registradora
+    getCashRegister: (callback) => {
+        const cashRef = ref(db, 'cashRegister');
+        return onValue(cashRef, (snapshot) => {
+            callback(snapshot.val() || { total: 0 });
+        });
+    },
+
+    updateCashRegister: (updates) => {
+        return update(ref(db, 'cashRegister'), updates);
     }
 };
 
