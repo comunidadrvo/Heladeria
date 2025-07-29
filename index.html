@@ -1159,7 +1159,9 @@
         function deleteProduct(id) {
             if (confirm('¿Seguro que deseas eliminar este producto?')) {
                 remove(ref(db, 'products/' + id)).then(() => {
-                    showNotification('🗑️ Producto eliminado');
+                    showNotification('🗑️ Producto eliminado exitosamente');
+                }).catch((error) => {
+                    showNotification('❌ Error al eliminar producto: ' + error.message, 'error');
                 });
             }
         }
@@ -1169,7 +1171,9 @@
         function deleteSale(saleKey) {
             if (confirm('¿Seguro que deseas eliminar esta venta?')) {
                 remove(ref(db, 'sales/' + saleKey)).then(() => {
-                    showNotification('🗑️ Venta eliminada');
+                    showNotification('🗑️ Venta eliminada exitosamente');
+                }).catch((error) => {
+                    showNotification('❌ Error al eliminar venta: ' + error.message, 'error');
                 });
             }
         }
@@ -1179,7 +1183,9 @@
         function deleteCredit(clientKey) {
             if (confirm('¿Seguro que deseas eliminar la deuda de este cliente?')) {
                 remove(ref(db, 'credits/' + clientKey)).then(() => {
-                    showNotification('🗑️ Deuda eliminada');
+                    showNotification('🗑️ Deuda eliminada exitosamente');
+                }).catch((error) => {
+                    showNotification('❌ Error al eliminar deuda: ' + error.message, 'error');
                 });
             }
         }
@@ -1348,8 +1354,8 @@
                         <td>${credit.lastDate || ''}</td>
                         <td><span style="color: #f39c12;">⏰ Pendiente</span></td>
                         <td>
-                            <button class="btn btn-success" style="padding: 8px 12px; margin-right: 5px;" onclick="processPayment('${clientKey}')">💰 Pagar</button>
-                            <button class="btn btn-primary" style="padding: 8px 12px; margin-right: 5px;" onclick="viewCreditHistory('${clientKey}')">📋 Historial</button>
+                            <button class="btn btn-success" style="padding: 8px 12px; margin-right: 5px;" onclick="processPayment()">💰 Pagar</button>
+                            <button class="btn btn-primary" style="padding: 8px 12px; margin-right: 5px;" onclick="viewCreditHistory()">📋 Historial</button>
                             <button class="btn btn-danger" style="padding: 8px 12px;" onclick="deleteCredit('${clientKey}')">🗑️ Eliminar</button>
                         </td>
                     `;
@@ -1476,6 +1482,14 @@
             if (evt && evt.target) evt.target.classList.add('active');
             document.querySelectorAll('.subsection').forEach(section => section.classList.remove('active'));
             document.getElementById(subSectionId).classList.add('active');
+
+            // Llamar a la función de renderizado adecuada
+            if (subSectionId === 'inventory') {
+                renderInventory();
+            }
+            if (subSectionId === 'credits') {
+                renderCredits();
+            }
         }
         window.showSubSection = showSubSection;
 
