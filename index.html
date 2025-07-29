@@ -666,10 +666,10 @@
             <div class="header">
                 <div class="logo">🍦 Heladería POS</div>
                 <div class="nav-buttons">
-                    <button class="nav-btn active" onclick="showSubSection('dashboard')">📊 Dashboard</button>
-                    <button class="nav-btn" onclick="showSubSection('pos')">🛒 Punto de Venta</button>
-                    <button class="nav-btn" onclick="showSubSection('inventory')">📦 Inventario</button>
-                    <button class="nav-btn" onclick="showSubSection('credits')">💳 Créditos</button>
+                    <button class="nav-btn active">📊 Dashboard</button>
+                    <button class="nav-btn">🛒 Punto de Venta</button>
+                    <button class="nav-btn">📦 Inventario</button>
+                    <button class="nav-btn">💳 Créditos</button>
                 </div>
                 <div class="user-info">
                     <span class="online-indicator"></span>
@@ -1419,7 +1419,6 @@
 
             // Botones de navegación
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.onclick = null; // Eliminar onclick heredado
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
