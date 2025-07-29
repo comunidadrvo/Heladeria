@@ -1,6 +1,41 @@
 // Gestión de secciones del POS
 import { firebaseOperations } from './firebase-config.js';
 
+// Función de notificación
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    // Estilos para la notificación
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.padding = '15px 25px';
+    notification.style.borderRadius = '5px';
+    notification.style.color = '#fff';
+    notification.style.zIndex = '1000';
+    
+    // Establecer color de fondo según el tipo
+    switch(type) {
+        case 'success':
+            notification.style.backgroundColor = '#4CAF50';
+            break;
+        case 'error':
+            notification.style.backgroundColor = '#f44336';
+            break;
+        default:
+            notification.style.backgroundColor = '#2196F3';
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remover la notificación después de 3 segundos
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
 // Variables globales para las secciones
 let products = {};
 let clients = {};
@@ -383,7 +418,48 @@ class CreditsSection {
             return;
         }
 
-        this.processPayment(clientKey);
+        this.processPayment(clientKey, amount);
+    }
+
+    static async processPayment(clientKey, amount) {
+        try {
+            // Verificar si el cliente existe y tiene créditos
+            if (!credits[clientKey]) {
+                showNotification('❌ El cliente no tiene créditos pendientes', 'error');
+                return;
+            }
+
+            // Obtener el saldo actual
+            const currentBalance = credits[clientKey].balance || 0;
+
+            // Verificar que el pago no exceda el saldo
+            if (amount > currentBalance) {
+                showNotification('❌ El pago excede el saldo pendiente', 'error');
+                return;
+            }
+
+            // Crear entrada en el historial
+            const paymentEntry = {
+                date: new Date().toLocaleDateString(),
+                amount: -amount, // Negativo porque es un pago
+                type: 'payment'
+            };
+
+            // Actualizar el saldo y el historial
+            const updates = {
+                balance: currentBalance - amount,
+                history: [...(credits[clientKey].history || []), paymentEntry]
+            };
+
+            // Actualizar en Firebase
+            await firebaseOperations.updateCredit(clientKey, updates);
+
+            showNotification('✅ Pago procesado correctamente', 'success');
+            this.render(); // Actualizar la vista
+        } catch (error) {
+            console.error('Error al procesar el pago:', error);
+            showNotification('❌ Error al procesar el pago', 'error');
+        }
     }
 
     static filterClients(searchTerm) {
@@ -751,4 +827,4 @@ document.addEventListener('DOMContentLoaded', function() {
     CreditsSection.init();
     POSSection.init();
     CashRegister.init();
-}); 
+});

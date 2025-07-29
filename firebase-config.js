@@ -80,7 +80,11 @@ export const firebaseOperations = {
     
     deleteCredit: (clientKey) => {
         return remove(ref(db, 'credits/' + clientKey));
+    },
+
+    updateCredit: (clientKey, updates) => {
+        return update(ref(db, 'credits/' + clientKey), updates);
     }
 };
 
-export { db }; 
+export { db };
