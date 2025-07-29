@@ -1388,6 +1388,7 @@
                 showNotification(`👋 Bienvenido ${currentUser}!`);
             }
         }
+        window.loginVendor = loginVendor;
 
         function logout() {
             currentUser = '';
@@ -1395,6 +1396,7 @@
             showSection('loginSection');
             showNotification('👋 Sesión cerrada correctamente');
         }
+        window.logout = logout;
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
@@ -1424,6 +1426,7 @@
             // Activar botón correspondiente
             event.target.classList.add('active');
         }
+        window.showSubSection = showSubSection;
 
         // Funciones del carrito
         function addToCart(product) {
