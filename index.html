@@ -1312,12 +1312,41 @@
                         <td>${credit.lastDate || ''}</td>
                         <td><span style="color: #f39c12;">⏰ Pendiente</span></td>
                         <td>
-                            <button class="btn btn-success" style="padding: 8px 12px; margin-right: 5px;" onclick="processPayment('${clientKey}')">💰 Pagar</button>
-                            <button class="btn btn-primary" style="padding: 8px 12px;" onclick="viewCreditHistory('${clientKey}')">📋 Historial</button>
+                            <button class="btn btn-success" style="padding: 8px 12px; margin-right: 5px;" onclick="processPayment()">💰 Pagar</button>
+                            <button class="btn btn-primary" style="padding: 8px 12px;" onclick="viewCreditHistory()">📋 Historial</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
+            });
+        }
+
+        // Calcular y mostrar totales del dashboard en tiempo real
+        function renderDashboardTotals() {
+            const totalSalesEl = document.getElementById('totalSales');
+            const cashSalesEl = document.getElementById('cashSales');
+            const transferSalesEl = document.getElementById('transferSales');
+            const creditSalesEl = document.getElementById('creditSales');
+            if (!totalSalesEl || !cashSalesEl || !transferSalesEl || !creditSalesEl) return;
+            const salesRef = ref(db, 'sales');
+            onValue(salesRef, (snapshot) => {
+                const sales = Object.values(snapshot.val() || {});
+                // Filtrar ventas del día actual
+                const today = new Date().toISOString().slice(0, 10);
+                let total = 0, efectivo = 0, transferencia = 0, credito = 0;
+                sales.forEach(sale => {
+                    const saleDate = new Date(sale.timestamp).toISOString().slice(0, 10);
+                    if (saleDate === today) {
+                        total += sale.total;
+                        if (sale.paymentMethod === 'efectivo') efectivo += sale.total;
+                        else if (sale.paymentMethod === 'transferencia') transferencia += sale.total;
+                        else if (sale.paymentMethod === 'crédito' || sale.paymentMethod === 'credito') credito += sale.total;
+                    }
+                });
+                totalSalesEl.textContent = `$${total.toFixed(2)}`;
+                cashSalesEl.textContent = `$${efectivo.toFixed(2)}`;
+                transferSalesEl.textContent = `$${transferencia.toFixed(2)}`;
+                creditSalesEl.textContent = `$${credito.toFixed(2)}`;
             });
         }
 
@@ -1327,6 +1356,7 @@
             loadClients();
             renderRecentSales();
             renderCredits();
+            renderDashboardTotals();
             // Selección de vendedor
             const vendorCards = document.querySelectorAll('.vendor-card');
             const loginBtn = document.getElementById('loginBtn');
