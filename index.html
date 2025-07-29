@@ -1155,6 +1155,36 @@
             });
         }
 
+        // 1. Eliminar productos del inventario
+        function deleteProduct(id) {
+            if (confirm('¿Seguro que deseas eliminar este producto?')) {
+                remove(ref(db, 'products/' + id)).then(() => {
+                    showNotification('🗑️ Producto eliminado');
+                });
+            }
+        }
+        window.deleteProduct = deleteProduct;
+
+        // 2. Eliminar ventas
+        function deleteSale(saleKey) {
+            if (confirm('¿Seguro que deseas eliminar esta venta?')) {
+                remove(ref(db, 'sales/' + saleKey)).then(() => {
+                    showNotification('🗑️ Venta eliminada');
+                });
+            }
+        }
+        window.deleteSale = deleteSale;
+
+        // 3. Eliminar deudas (créditos)
+        function deleteCredit(clientKey) {
+            if (confirm('¿Seguro que deseas eliminar la deuda de este cliente?')) {
+                remove(ref(db, 'credits/' + clientKey)).then(() => {
+                    showNotification('🗑️ Deuda eliminada');
+                });
+            }
+        }
+        window.deleteCredit = deleteCredit;
+
         // Renderizar inventario
         function renderInventory() {
             const tbody = document.querySelector('#inventory tbody');
@@ -1170,12 +1200,14 @@
                     <td><span style="color: ${product.stock <= product.minStock ? '#e74c3c' : '#27ae60'};">${product.stock <= product.minStock ? '⚠️ Stock Bajo' : '✅ Stock OK'}</span></td>
                     <td>
                         <button class="btn btn-primary" style="padding: 8px 12px; margin-right: 5px;" onclick="restockProduct('${product.id}')">📦 +Stock</button>
-                        <button class="btn btn-warning" style="padding: 8px 12px;" onclick="editProduct('${product.id}')">✏️ Editar</button>
+                        <button class="btn btn-warning" style="padding: 8px 12px; margin-right: 5px;" onclick="editProduct('${product.id}')">✏️ Editar</button>
+                        <button class="btn btn-danger" style="padding: 8px 12px;" onclick="deleteProduct('${product.id}')">🗑️ Eliminar</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
+        window.renderInventory = renderInventory;
 
         // Renderizar clientes en el select del POS
         function renderClients() {
@@ -1208,6 +1240,8 @@
             }).then(() => {
                 showNotification('✅ Producto agregado exitosamente');
                 closeModal();
+            }).catch((err) => {
+                showNotification('❌ Error al agregar producto: ' + err.message, 'error');
             });
         }
 
@@ -1288,11 +1322,13 @@
                         <td>${sale.products.map(p => `${p.name} (${p.quantity})`).join(', ')}</td>
                         <td>$${sale.total.toFixed(2)}</td>
                         <td>${sale.paymentMethod}</td>
+                        <td><button class="btn btn-danger" style="padding: 6px 10px;" onclick="deleteSale('${sale.id}')">🗑️</button></td>
                     `;
                     tbody.appendChild(tr);
                 });
             });
         }
+        window.renderRecentSales = renderRecentSales;
 
         // Renderizar créditos en la tabla de créditos
         function renderCredits() {
@@ -1312,14 +1348,16 @@
                         <td>${credit.lastDate || ''}</td>
                         <td><span style="color: #f39c12;">⏰ Pendiente</span></td>
                         <td>
-                            <button class="btn btn-success" style="padding: 8px 12px; margin-right: 5px;" onclick="processPayment()">💰 Pagar</button>
-                            <button class="btn btn-primary" style="padding: 8px 12px;" onclick="viewCreditHistory()">📋 Historial</button>
+                            <button class="btn btn-success" style="padding: 8px 12px; margin-right: 5px;" onclick="processPayment('${clientKey}')">💰 Pagar</button>
+                            <button class="btn btn-primary" style="padding: 8px 12px; margin-right: 5px;" onclick="viewCreditHistory('${clientKey}')">📋 Historial</button>
+                            <button class="btn btn-danger" style="padding: 8px 12px;" onclick="deleteCredit('${clientKey}')">🗑️ Eliminar</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             });
         }
+        window.renderCredits = renderCredits;
 
         // Calcular y mostrar totales del dashboard en tiempo real
         function renderDashboardTotals() {
@@ -1378,6 +1416,21 @@
                     selectedPaymentMethod = this.dataset.method || 'efectivo';
                 });
             });
+
+            // Botones de navegación
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.onclick = null; // Eliminar onclick heredado
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const subSection = this.textContent.trim().toLowerCase().includes('dashboard') ? 'dashboard'
+                        : this.textContent.trim().toLowerCase().includes('punto') ? 'pos'
+                        : this.textContent.trim().toLowerCase().includes('inventario') ? 'inventory'
+                        : 'credits';
+                    document.querySelectorAll('.subsection').forEach(section => section.classList.remove('active'));
+                    document.getElementById(subSection).classList.add('active');
+                });
+            });
         });
 
         // Funciones de navegación
@@ -1410,14 +1463,14 @@
         }
 
         // --- CORRECCIÓN DE NAVEGACIÓN ENTRE SECCIONES ---
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                const subSection = this.getAttribute('onclick').match(/'([^']+)'/)[1];
-                showSubSection(subSection, e);
-            });
-        });
+        // document.querySelectorAll('.nav-btn').forEach(btn => {
+        //     btn.addEventListener('click', function(e) {
+        //         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        //         this.classList.add('active');
+        //         const subSection = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+        //         showSubSection(subSection, e);
+        //     });
+        // });
 
         function showSubSection(subSectionId, evt) {
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -1531,6 +1584,7 @@
             const client = clientSelect ? clientSelect.value : '';
             const now = new Date();
             const sale = {
+                id: push(ref(db, 'sales')).key, // Asignar un ID único
                 time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 vendor: currentUser,
                 client,
@@ -1551,7 +1605,7 @@
                 showNotification('❌ Stock insuficiente para uno o más productos', 'error');
                 return;
             }
-            set(push(ref(db, 'sales')), sale).then(() => {
+            set(ref(db, 'sales/' + sale.id), sale).then(() => {
                 update(ref(db), updates).then(() => {
                     clearCart();
                     showNotification(`✅ Venta procesada: $${total.toFixed(2)} (${selectedPaymentMethod})`);
@@ -1665,6 +1719,9 @@
         window.confirmPayment = confirmPayment;
         window.addCreditPayment = addCreditPayment;
         window.viewCreditHistory = viewCreditHistory;
+        window.deleteProduct = deleteProduct;
+        window.deleteSale = deleteSale;
+        window.deleteCredit = deleteCredit;
         // --- FIN: EXPOSICIÓN DE FUNCIONES ---
     </script>
 </body>
