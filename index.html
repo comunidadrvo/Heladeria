@@ -1172,6 +1172,8 @@
             if (confirm('¿Seguro que deseas eliminar esta venta?')) {
                 remove(ref(db, 'sales/' + saleKey)).then(() => {
                     showNotification('🗑️ Venta eliminada exitosamente');
+                    // Forzar actualización de la vista
+                    setTimeout(() => renderRecentSales(), 500);
                 }).catch((error) => {
                     showNotification('❌ Error al eliminar venta: ' + error.message, 'error');
                 });
@@ -1194,8 +1196,19 @@
         // Renderizar inventario
         function renderInventory() {
             const tbody = document.querySelector('#inventory tbody');
-            if (!tbody) return;
+            if (!tbody) {
+                console.log('No se encontró la tabla de inventario');
+                return;
+            }
+            
+            console.log('Renderizando inventario con productos:', products);
             tbody.innerHTML = '';
+            
+            if (Object.keys(products).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No hay productos registrados</td></tr>';
+                return;
+            }
+            
             Object.values(products).forEach(product => {
                 const tr = document.createElement('tr');
                 if (product.stock <= product.minStock) tr.style.background = 'rgba(255, 107, 107, 0.1)';
@@ -1225,29 +1238,45 @@
             });
         }
 
-        // Agregar producto a Firebase
+        // Corregir función para agregar productos
         window.addProduct = function() {
-            const name = document.querySelector('#addProductModal input[placeholder="Ej: Helado de Pistacho"]').value.trim();
-            const price = parseFloat(document.querySelector('#addProductModal input[placeholder="0.00"]').value);
-            const stock = parseInt(document.querySelector('#addProductModal input[placeholder="0"]').value);
-            const minStock = parseInt(document.querySelector('#addProductModal input[placeholder="10"]').value);
+            const nameInput = document.querySelector('#addProductModal input[placeholder="Ej: Helado de Pistacho"]');
+            const priceInput = document.querySelector('#addProductModal input[placeholder="0.00"]');
+            const stockInput = document.querySelector('#addProductModal input[placeholder="0"]');
+            const minStockInput = document.querySelector('#addProductModal input[placeholder="10"]');
+            
+            const name = nameInput.value.trim();
+            const price = parseFloat(priceInput.value);
+            const stock = parseInt(stockInput.value);
+            const minStock = parseInt(minStockInput.value);
+            
             if (!name || isNaN(price) || isNaN(stock) || isNaN(minStock)) {
-                showNotification('❌ Complete todos los campos', 'error');
+                showNotification('❌ Complete todos los campos correctamente', 'error');
                 return;
             }
+            
             const newId = 'H' + (Object.keys(products).length + 1).toString().padStart(3, '0');
-            set(ref(db, 'products/' + newId), {
+            const newProduct = {
                 id: newId,
-                name,
-                price,
-                stock,
-                minStock,
+                name: name,
+                price: price,
+                stock: stock,
+                minStock: minStock,
                 icon: '🍦'
-            }).then(() => {
+            };
+            
+            set(ref(db, 'products/' + newId), newProduct).then(() => {
                 showNotification('✅ Producto agregado exitosamente');
+                // Limpiar los campos del modal
+                nameInput.value = '';
+                priceInput.value = '';
+                stockInput.value = '';
+                minStockInput.value = '';
                 closeModal();
-            }).catch((err) => {
-                showNotification('❌ Error al agregar producto: ' + err.message, 'error');
+                // Forzar actualización del inventario
+                setTimeout(() => renderInventory(), 500);
+            }).catch((error) => {
+                showNotification('❌ Error al agregar producto: ' + error.message, 'error');
             });
         }
 
@@ -1401,6 +1430,7 @@
             renderRecentSales();
             renderCredits();
             renderDashboardTotals();
+            
             // Selección de vendedor
             const vendorCards = document.querySelectorAll('.vendor-card');
             const loginBtn = document.getElementById('loginBtn');
@@ -1423,17 +1453,30 @@
                 });
             });
 
-            // Botones de navegación
+            // Botones de navegación corregidos
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
-                    const subSection = this.textContent.trim().toLowerCase().includes('dashboard') ? 'dashboard'
-                        : this.textContent.trim().toLowerCase().includes('punto') ? 'pos'
-                        : this.textContent.trim().toLowerCase().includes('inventario') ? 'inventory'
-                        : 'credits';
+                    
+                    let subSection = 'dashboard';
+                    if (this.textContent.includes('Punto de Venta')) subSection = 'pos';
+                    else if (this.textContent.includes('Inventario')) subSection = 'inventory';
+                    else if (this.textContent.includes('Créditos')) subSection = 'credits';
+                    
                     document.querySelectorAll('.subsection').forEach(section => section.classList.remove('active'));
-                    document.getElementById(subSection).classList.add('active');
+                    const targetSection = document.getElementById(subSection);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                        
+                        // Llamar a la función de renderizado adecuada
+                        if (subSection === 'inventory') {
+                            setTimeout(() => renderInventory(), 100);
+                        }
+                        if (subSection === 'credits') {
+                            setTimeout(() => renderCredits(), 100);
+                        }
+                    }
                 });
             });
         });
