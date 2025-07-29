@@ -289,8 +289,9 @@ class CreditsSection {
             return;
         }
 
-        // Agregar estilos para el modal y la tabla de historial
-        const styles = document.createElement('style');
+        // No agregar estilos aquí para evitar que se apliquen globalmente sin control
+        // Se agregarán dinámicamente al crear el modal
+        // const styles = document.createElement('style');
         styles.textContent = `
             .modal {
                 display: block;
@@ -649,13 +650,120 @@ class CreditsSection {
             </div>
         `;
 
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Adjuntar estilos dinámicamente solo cuando el modal se muestra
+        const styles = document.createElement('style');
+        styles.id = 'payment-modal-styles'; // Asignar un ID para poder removerlos después
+        styles.textContent = `
+            .modal {
+                display: block;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+            }
+
+            .modal-content {
+                background-color: #fefefe;
+                margin: 15% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%;
+                max-width: 500px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .modal-header h3 {
+                margin: 0;
+                color: #2c3e50;
+            }
+
+            .close {
+                color: #aaa;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .close:hover {
+                color: #555;
+            }
+
+            .modal-body {
+                padding: 10px 0;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                color: #555;
+            }
+
+            .form-control {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+
+            .form-control:focus {
+                border-color: #3498db;
+                outline: none;
+                box-shadow: 0 0 5px rgba(52,152,219,0.3);
+            }
+
+            .btn {
+                padding: 8px 15px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                margin-right: 10px;
+            }
+
+            .btn-primary {
+                background-color: #3498db;
+                color: white;
+            }
+
+            .btn-secondary {
+                background-color: #95a5a6;
+                color: white;
+            }
+
+            .btn:hover {
+                opacity: 0.9;
+            }
+        `;
+        document.head.appendChild(styles);
     }
 
     static closePaymentModal() {
         const modal = document.getElementById('paymentModal');
         if (modal) {
             modal.remove();
+        }
+
+        const styles = document.getElementById('payment-modal-styles');
+        if (styles) {
+            styles.remove();
         }
     }
 
