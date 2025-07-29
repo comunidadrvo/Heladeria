@@ -700,6 +700,20 @@
                             <div class="stat-value" id="creditSales">$20.00</div>
                             <div class="stat-label">📝 Ventas a Crédito</div>
                         </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
+                            <div class="stat-value" id="availableCash">$180.25</div>
+                            <div class="stat-label">💵 Dinero Disponible</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);">
+                            <div class="stat-value" id="lastUpdate">Hoy</div>
+                            <div class="stat-label">🕒 Última Actualización</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="btn btn-success" id="deliverCashBtn" style="padding: 15px 30px; font-size: 18px;">
+                            💰 Entregar Dinero al Encargado
+                        </button>
                     </div>
 
                     <div id="alertContainer"></div>
@@ -1092,6 +1106,7 @@
         </div>
     </div>
 
+    <script type="module" src="sections.js"></script>
     <script type="module" src="pos-app.js"></script>
 </body>
 </html>
