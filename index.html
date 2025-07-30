@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema POS - Punto de Venta</title>
+    <title>Sistema POS - Heladería</title>
     <style>
         * {
             margin: 0;
@@ -15,282 +15,481 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #333;
+            padding: 20px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
         .header {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
             text-align: center;
         }
 
         .header h1 {
-            color: #667eea;
-            font-size: 2.5rem;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            border-radius: 10px 10px 0 0;
+            margin: 0 2px;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
             margin-bottom: 10px;
         }
 
-        .nav-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 20px;
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
         }
 
-        .nav-btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        .nav-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
-        .nav-btn.active {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-        }
-
-        .section {
-            display: none;
+        .product-card {
             background: white;
+            border: 2px solid #e9ecef;
             border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .product-card.low-stock {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .product-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .product-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .product-price {
+            font-size: 1.4em;
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .product-stock {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .product-stock.low {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .cart-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
         }
 
-        .section.active {
-            display: block;
-            animation: fadeIn 0.5s ease-in;
+        .cart-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .cart-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .cart-item-price {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .quantity-display {
+            min-width: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .cart-total {
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #667eea;
         }
 
         .form-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
+        .form-label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
-            color: #555;
+            color: #333;
         }
 
-        .form-group input, .form-group select, .form-group textarea {
+        .form-select, .form-input {
             width: 100%;
             padding: 12px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #e9ecef;
             border-radius: 8px;
             font-size: 16px;
             transition: border-color 0.3s ease;
         }
 
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        .form-select:focus, .form-input:focus {
             outline: none;
             border-color: #667eea;
         }
 
-        .btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .payment-method {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            text-align: center;
             cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .payment-method:hover {
+            border-color: #667eea;
+        }
+
+        .payment-method.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: bold;
+            cursor: pointer;
             transition: all 0.3s ease;
-            margin: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .btn:hover {
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        .btn-success {
-            background: linear-gradient(45deg, #2ed573, #1e90ff);
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
         }
 
         .btn-danger {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            background: #dc3545;
+            color: white;
         }
 
-        .btn-warning {
-            background: linear-gradient(45deg, #ffa726, #ff7043);
+        .btn-success {
+            background: #28a745;
+            color: white;
         }
 
-        .payment-options {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
+        .btn-full {
+            width: 100%;
         }
 
-        .payment-btn {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 10px;
-            cursor: pointer;
-            text-align: center;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .payment-btn.selected {
-            border-color: #667eea;
-            background: #f0f4ff;
-            color: #667eea;
-        }
-
-        .payment-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .data-table {
+        .table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
 
-        .data-table th {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .table th {
+            background: #667eea;
             color: white;
             padding: 15px;
             text-align: left;
             font-weight: bold;
         }
 
-        .data-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
         }
 
-        .data-table tr:hover {
-            background: #f8f9ff;
+        .table tr:hover {
+            background: #f8f9fa;
         }
 
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
             font-weight: bold;
         }
 
-        .status-paid {
-            background: #d4edda;
-            color: #155724;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .status-accepted {
-            background: #cce5ff;
-            color: #004085;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .total-box {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .badge-success {
+            background: #28a745;
             color: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            margin: 20px 0;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         }
 
-        .total-box h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
+        .badge-danger {
+            background: #dc3545;
+            color: white;
         }
 
-        .total-box .amount {
-            font-size: 2rem;
-            font-weight: bold;
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
         }
 
-        .card {
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .close-btn:hover {
+            color: #333;
         }
 
         .alert {
             padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-weight: bold;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
         }
 
         .alert-success {
             background: #d4edda;
-            color: #155724;
             border: 1px solid #c3e6cb;
+            color: #155724;
         }
 
-        .alert-error {
+        .alert-danger {
             background: #f8d7da;
-            color: #721c24;
             border: 1px solid #f5c6cb;
+            color: #721c24;
         }
 
         .search-box {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
             font-size: 16px;
             margin-bottom: 20px;
-            background: white;
         }
 
         .search-box:focus {
@@ -298,58 +497,84 @@
             border-color: #667eea;
         }
 
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
+        .debt-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
         }
 
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(-50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
+        .debt-amount {
+            font-size: 3em;
             font-weight: bold;
-            cursor: pointer;
-            transition: color 0.2s;
+            margin-bottom: 10px;
         }
 
-        .close:hover {
-            color: #667eea;
+        .debt-label {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.2em;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 14px;
         }
 
         @media (max-width: 768px) {
-            .nav-buttons {
-                flex-direction: column;
+            .container {
+                margin: 10px;
+                border-radius: 10px;
             }
-            
-            .payment-options {
-                flex-direction: column;
+
+            .header {
+                padding: 20px;
             }
-            
-            .grid {
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+
+            .nav-tab {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .stats-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
             }
         }
     </style>
@@ -357,1289 +582,1095 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏪 Sistema POS</h1>
+            <h1>🍦 Sistema POS</h1>
             <p>Punto de Venta Completo</p>
-            
-            <div class="nav-buttons">
-                <button class="nav-btn active" onclick="showSection('ventas')">💰 Ventas</button>
-                <button class="nav-btn" onclick="showSection('creditos')">📋 Créditos/Deudas</button>
-                <button class="nav-btn" onclick="showSection('pedidos')">📦 Pedidos</button>
-                <button class="nav-btn" onclick="showSection('caja')">💵 Caja</button>
-                <button class="nav-btn" onclick="showSection('reportes')">📊 Reportes</button>
-                <button class="nav-btn" onclick="showSection('clientes')">👥 Clientes</button>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('ventas')">🛒 Ventas</button>
+            <button class="nav-tab" onclick="showTab('creditos')">💳 Créditos/Deudas</button>
+            <button class="nav-tab" onclick="showTab('pedidos')">📋 Pedidos</button>
+            <button class="nav-tab" onclick="showTab('caja')">💰 Caja</button>
+            <button class="nav-tab" onclick="showTab('reportes')">📊 Reportes</button>
+            <button class="nav-tab" onclick="showTab('clientes')">👥 Clientes</button>
+        </div>
+
+        <!-- Tab de Ventas -->
+        <div id="ventas" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="ventasHoy">$0.00</div>
+                    <div class="stat-label">💰 Ventas Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ventasEfectivo">$0.00</div>
+                    <div class="stat-label">💵 Efectivo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ventasTransferencia">$0.00</div>
+                    <div class="stat-label">💳 Transferencia</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ventasCredito">$0.00</div>
+                    <div class="stat-label">📝 Crédito</div>
+                </div>
+            </div>
+
+            <div class="products-grid" id="productosGrid">
+                <!-- Los productos se cargarán aquí -->
+            </div>
+
+            <div class="cart-section">
+                <div class="cart-header">
+                    <div class="cart-title">🛒 Carrito de Compras</div>
+                    <button class="btn btn-secondary" onclick="limpiarCarrito()">🗑️ Limpiar</button>
+                </div>
+
+                <div class="cart-items" id="carritoItems">
+                    <!-- Los items del carrito se mostrarán aquí -->
+                </div>
+
+                <div class="cart-total" id="carritoTotal">
+                    Total: $0.00
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">👤 Cliente</label>
+                    <select class="form-select" id="clienteSelect">
+                        <option value="general">Cliente General</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">💳 Método de Pago</label>
+                    <div class="payment-methods">
+                        <div class="payment-method active" onclick="seleccionarPago('efectivo')">
+                            💵<br>Efectivo
+                        </div>
+                        <div class="payment-method" onclick="seleccionarPago('transferencia')">
+                            💳<br>Transferencia
+                        </div>
+                        <div class="payment-method" onclick="seleccionarPago('credito')">
+                            📝<br>Crédito
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="procesarVenta()">
+                    💰 Procesar Venta
+                </button>
             </div>
         </div>
 
-        <!-- Sección de Ventas -->
-        <div id="ventas" class="section active">
-            <h2>💰 Nueva Venta</h2>
-            <div class="grid">
-                <div class="card">
-                    <div class="form-group">
-                        <label>Cliente:</label>
-                        <select id="clienteVenta">
-                            <option value="general">Cliente General</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Monto de la Venta:</label>
-                        <input type="number" id="montoVenta" placeholder="0.00" step="0.01" min="0">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Descripción (opcional):</label>
-                        <textarea id="descripcionVenta" placeholder="Detalles de la venta..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Método de Pago:</label>
-                        <div class="payment-options">
-                            <div class="payment-btn selected" onclick="selectPayment('efectivo')">
-                                💵 Efectivo
-                            </div>
-                            <div class="payment-btn" onclick="selectPayment('tarjeta')">
-                                💳 Tarjeta
-                            </div>
-                            <div class="payment-btn" onclick="selectPayment('credito')">
-                                📋 Crédito
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-success" onclick="procesarVenta()">✅ Procesar Venta</button>
-                </div>
-                
-                <div class="card">
-                    <h3>💼 Resumen del Día</h3>
-                    <div class="total-box">
-                        <h3>Total Vendido Hoy</h3>
-                        <div class="amount" id="totalVentasHoy">$0.00</div>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <div style="flex: 1; text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                            <strong>Efectivo</strong><br>
-                            <span id="efectivoHoy">$0.00</span>
-                        </div>
-                        <div style="flex: 1; text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                            <strong>Tarjeta</strong><br>
-                            <span id="tarjetaHoy">$0.00</span>
-                        </div>
-                        <div style="flex: 1; text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                            <strong>Crédito</strong><br>
-                            <span id="creditoHoy">$0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sección de Créditos/Deudas -->
-        <div id="creditos" class="section">
+        <!-- Tab de Créditos/Deudas -->
+        <div id="creditos" class="tab-content">
             <h2>📋 Gestión de Créditos y Deudas</h2>
             
-            <input type="text" class="search-box" placeholder="🔍 Buscar cliente..." onkeyup="filtrarDeudas(this.value)">
+            <input type="text" class="search-box" placeholder="🔍 Buscar cliente..." id="buscarCliente">
             
-            <button class="btn btn-warning" onclick="forzarRecargaDatos()" style="margin-bottom: 20px;">
-                🔄 Recargar Datos (Debug)
+            <button class="btn btn-secondary" onclick="recargarDatos()" style="margin-bottom: 20px;">
+                🔄 Recargar Datos
             </button>
             
-            <div class="total-box">
-                <h3>Total en Deudas</h3>
-                <div class="amount" id="totalDeudas">$0.00</div>
+            <div class="debt-summary">
+                <div class="debt-label">Total en Deudas</div>
+                <div class="debt-amount" id="totalDeudas">$0.00</div>
             </div>
-            
-            <table class="data-table" id="tablaDeudas">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Deuda Total</th>
-                        <th>Última Venta</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+
+            <div id="tablaDeudas">
+                <!-- La tabla de deudas se cargará aquí -->
+            </div>
         </div>
 
-        <!-- Sección de Pedidos -->
-        <div id="pedidos" class="section">
-            <h2>📦 Gestión de Pedidos</h2>
-            
-            <div class="grid">
-                <div class="card">
-                    <h3>➕ Nuevo Pedido al Proveedor</h3>
-                    <div class="form-group">
-                        <label>Nombre del Proveedor:</label>
-                        <input type="text" id="nombreProveedor" placeholder="Ingrese el nombre del proveedor">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Nota del Pedido:</label>
-                        <textarea id="notaPedido" placeholder="Detalles del pedido..."></textarea>
-                    </div>
-                    
-                    <button class="btn btn-success" onclick="crearPedido()">📤 Enviar Pedido</button>
-                </div>
-                
-                <div class="card">
-                    <h3>💰 Deudas con Proveedores</h3>
-                    <div class="total-box">
-                        <h3>Total Adeudado</h3>
-                        <div class="amount" id="totalProveedores">$0.00</div>
-                    </div>
-                </div>
+        <!-- Tab de Pedidos -->
+        <div id="pedidos" class="tab-content">
+            <h2>📋 Gestión de Pedidos</h2>
+            <div class="no-data">
+                <p>📝 Funcionalidad de pedidos en desarrollo</p>
             </div>
-            
-            <h3 style="margin-top: 30px;">📋 Lista de Pedidos</h3>
-            <table class="data-table" id="tablaPedidos">
-                <thead>
-                    <tr>
-                        <th>Proveedor</th>
-                        <th>Fecha</th>
-                        <th>Estado</th>
-                        <th>Monto</th>
-                        <th>Deuda Restante</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
         </div>
 
-        <!-- Sección de Caja -->
-        <div id="caja" class="section">
-            <h2>💵 Gestión de Caja</h2>
-            
-            <div class="grid">
-                <div class="card">
-                    <h3>💰 Dinero Disponible</h3>
-                    <div class="total-box">
-                        <h3>Efectivo en Caja</h3>
-                        <div class="amount" id="dineroDisponible">$0.00</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Monto a Retirar:</label>
-                        <input type="number" id="montoRetiro" placeholder="0.00" step="0.01" min="0">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Motivo del Retiro:</label>
-                        <input type="text" id="motivoRetiro" placeholder="Cierre de caja, gastos, etc.">
-                    </div>
-                    
-                    <button class="btn btn-warning" onclick="retirarDinero()">💸 Retirar Dinero</button>
+        <!-- Tab de Caja -->
+        <div id="caja" class="tab-content">
+            <h2>💰 Control de Caja</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="cajaEfectivo">$0.00</div>
+                    <div class="stat-label">💵 Efectivo en Caja</div>
                 </div>
-                
-                <div class="card">
-                    <h3>📊 Resumen de Caja</h3>
-                    <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; margin: 15px 0;">
-                        <p><strong>Ventas en Efectivo Hoy:</strong> <span id="ventasEfectivoHoy">$0.00</span></p>
-                        <p><strong>Retiros Realizados:</strong> <span id="retirosHoy">$0.00</span></p>
-                        <p><strong>Saldo Actual:</strong> <span id="saldoActual">$0.00</span></p>
-                    </div>
-                    
-                    <button class="btn btn-success" onclick="realizarCierreCaja()">🔒 Realizar Cierre de Caja</button>
+                <div class="stat-card">
+                    <div class="stat-value" id="cajaTransferencias">$0.00</div>
+                    <div class="stat-label">💳 Transferencias</div>
                 </div>
-            </div>
-            
-            <h3 style="margin-top: 30px;">📋 Historial de Retiros</h3>
-            <table class="data-table" id="tablaRetiros">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Monto</th>
-                        <th>Motivo</th>
-                        <th>Tipo</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <!-- Sección de Reportes -->
-        <div id="reportes" class="section">
-            <h2>📊 Reportes</h2>
-            
-            <div class="form-group">
-                <label>Filtrar por Fecha:</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="date" id="fechaInicio">
-                    <input type="date" id="fechaFin">
-                    <button class="btn" onclick="generarReportes()">🔍 Generar Reportes</button>
+                <div class="stat-card">
+                    <div class="stat-value" id="cajaPendiente">$0.00</div>
+                    <div class="stat-label">📝 Créditos Pendientes</div>
                 </div>
-            </div>
-            
-            <div class="grid">
-                <div class="card">
-                    <h3>💰 Reporte de Ventas</h3>
-                    <div class="total-box">
-                        <h3>Total Vendido</h3>
-                        <div class="amount" id="reporteTotalVentas">$0.00</div>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <div style="flex: 1; text-align: center; padding: 10px; background: #e8f5e8; border-radius: 8px;">
-                            <strong>Efectivo</strong><br>
-                            <span id="reporteEfectivo">$0.00</span>
-                        </div>
-                        <div style="flex: 1; text-align: center; padding: 10px; background: #e8f4fd; border-radius: 8px;">
-                            <strong>Tarjeta</strong><br>
-                            <span id="reporteTarjeta">$0.00</span>
-                        </div>
-                        <div style="flex: 1; text-align: center; padding: 10px; background: #fff3cd; border-radius: 8px;">
-                            <strong>Crédito</strong><br>
-                            <span id="reporteCredito">$0.00</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <h3>📋 Reporte de Deudas</h3>
-                    <div class="total-box">
-                        <h3>Deudas Activas</h3>
-                        <div class="amount" id="reporteDeudas">$0.00</div>
-                    </div>
-                    <p style="text-align: center; margin-top: 10px;">
-                        <strong>Pagos Recibidos:</strong> <span id="reportePagos">$0.00</span>
-                    </p>
-                </div>
-                
-                <div class="card">
-                    <h3>💵 Reporte de Caja</h3>
-                    <div class="total-box">
-                        <h3>Cierres de Caja</h3>
-                        <div class="amount" id="reporteCierres">$0.00</div>
-                    </div>
-                    <p style="text-align: center; margin-top: 10px;">
-                        <strong>Retiros Totales:</strong> <span id="reporteRetiros">$0.00</span>
-                    </p>
+                <div class="stat-card">
+                    <div class="stat-value" id="cajaTotal">$0.00</div>
+                    <div class="stat-label">💰 Total del Día</div>
                 </div>
             </div>
         </div>
 
-        <!-- Sección de Clientes -->
-        <div id="clientes" class="section">
-            <h2>👥 Gestión de Clientes</h2>
+        <!-- Tab de Reportes -->
+        <div id="reportes" class="tab-content">
+            <h2>📊 Reportes y Estadísticas</h2>
             
-            <div class="card">
-                <h3>➕ Agregar Nuevo Cliente</h3>
-                <div style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Nombre del Cliente:</label>
-                        <input type="text" id="nombreCliente" placeholder="Nombre completo">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Teléfono (opcional):</label>
-                        <input type="text" id="telefonoCliente" placeholder="000-000-0000">
-                    </div>
-                    <div style="display: flex; align-items: end;">
-                        <button class="btn btn-success" onclick="agregarCliente()">➕ Agregar</button>
-                    </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="reporteVentasHoy">$0.00</div>
+                    <div class="stat-label">💰 Ventas de Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="reporteVentasSemana">$0.00</div>
+                    <div class="stat-label">📅 Ventas de la Semana</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="reporteVentasMes">$0.00</div>
+                    <div class="stat-label">📆 Ventas del Mes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="reporteProductoMasVendido">-</div>
+                    <div class="stat-label">🏆 Producto Más Vendido</div>
                 </div>
             </div>
-            
-            <h3 style="margin-top: 30px;">📋 Lista de Clientes</h3>
-            <table class="data-table" id="tablaClientes">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Teléfono</th>
-                        <th>Deuda Actual</th>
-                        <th>Total Compras</th>
-                        <th>Última Compra</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
 
-    <!-- Modales -->
-    <div id="modalDeuda" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="cerrarModalDeuda()">&times;</span>
-            <h3 id="tituloModalDeuda">Gestionar Deuda</h3>
-            <div class="form-group">
-                <label>Monto del Pago:</label>
-                <input type="number" id="montoPago" placeholder="0.00" step="0.01" min="0">
+            <div style="margin-top: 30px;">
+                <h3>📋 Ventas Recientes</h3>
+                <div id="ventasRecientes">
+                    <!-- Las ventas recientes se mostrarán aquí -->
+                </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-success" onclick="registrarPago()">💰 Registrar Pago</button>
-                <button class="btn" onclick="cerrarModalDeuda()">❌ Cancelar</button>
-                <button class="btn btn-warning" onclick="verHistorialDeuda()">📊 Ver Historial</button>
+        </div>
+
+        <!-- Tab de Clientes -->
+        <div id="clientes" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>👥 Gestión de Clientes</h2>
+                <button class="btn btn-primary" onclick="mostrarModalCliente()">➕ Agregar Cliente</button>
+            </div>
+
+            <input type="text" class="search-box" placeholder="🔍 Buscar cliente..." id="buscarClienteTab">
+
+            <div id="tablaClientes">
+                <!-- La tabla de clientes se cargará aquí -->
             </div>
         </div>
     </div>
 
-    <div id="modalPedido" class="modal">
+    <!-- Modal para agregar cliente -->
+    <div id="modalCliente" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="cerrarModalPedido()">&times;</span>
-            <h3 id="tituloModalPedido">Gestionar Pedido</h3>
-            <div id="contenidoModalPedido"></div>
+            <div class="modal-header">
+                <span class="close-btn" onclick="cerrarModalCliente()">&times;</span>
+                <h3 class="modal-title">👤 Agregar Nuevo Cliente</h3>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-input" id="nombreCliente" placeholder="Nombre completo">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Teléfono</label>
+                <input type="text" class="form-input" id="telefonoCliente" placeholder="Número de teléfono">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email (opcional)</label>
+                <input type="email" class="form-input" id="emailCliente" placeholder="correo@ejemplo.com">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="agregarCliente()">✅ Agregar</button>
+                <button class="btn btn-secondary" onclick="cerrarModalCliente()">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para pagar deuda -->
+    <div id="modalPago" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close-btn" onclick="cerrarModalPago()">&times;</span>
+                <h3 class="modal-title">💰 Registrar Pago</h3>
+            </div>
+            <div id="infoPagoCliente">
+                <!-- Info del cliente se cargará aquí -->
+            </div>
+            <div class="form-group">
+                <label class="form-label">💵 Monto a Pagar</label>
+                <input type="number" class="form-input" id="montoPago" placeholder="0.00" step="0.01">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-success" onclick="procesarPago()">✅ Confirmar Pago</button>
+                <button class="btn btn-secondary" onclick="cerrarModalPago()">❌ Cancelar</button>
+            </div>
         </div>
     </div>
 
     <!-- Firebase SDK -->
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDsoDE6Ej34PEBAMqIYTjZ4zifRs-PCmAI",
-            authDomain: "sistema-de-venta-dbef2.firebaseapp.com",
-            databaseURL: "https://sistema-de-venta-dbef2-default-rtdb.firebaseio.com",
-            projectId: "sistema-de-venta-dbef2",
-            storageBucket: "sistema-de-venta-dbef2.firebasestorage.app",
-            messagingSenderId: "987388131167",
-            appId: "1:987388131167:web:41dd31553585d7403528ea"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        // Make Firebase available globally
-        window.firebaseApp = app;
-        window.firebaseDatabase = database;
-        window.firebaseRef = ref;
-        window.firebasePush = push;
-        window.firebaseSet = set;
-        window.firebaseGet = get;
-        window.firebaseUpdate = update;
-        window.firebaseRemove = remove;
-        window.firebaseOnValue = onValue;
-
-        console.log('Firebase inicializado correctamente');
-        window.initializeApp();
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // Variables globales
-        let metodoPagoSeleccionado = 'efectivo';
-        let clienteDeudaActual = null;
-        let pedidoActual = null;
-
-        // Datos Firebase
-        let db = {
-            ventas: {},
-            clientes: {},
-            deudas: {},
-            pedidos: {},
-            retiros: {},
-            pagosDeuda: {},
-            pagosPedidos: {}
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-WV5eeZ-9DpTBYFFNr9_Q29Dg_hMyU6w",
+            authDomain: "heladeria-pos.firebaseapp.com",
+            databaseURL: "https://heladeria-pos-default-rtdb.firebaseio.com",
+            projectId: "heladeria-pos",
+            storageBucket: "heladeria-pos.firebasestorage.app",
+            messagingSenderId: "171441568131",
+            appId: "1:171441568131:web:6f730a3e64b79735815eb6"
         };
 
-        // Inicialización de la aplicación
-        function initializeApp() {
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        console.log('Firebase inicializado correctamente');
+
+        // Variables globales
+        let productos = {};
+        let clientes = {};
+        let ventas = [];
+        let carrito = [];
+        let metodoPago = 'efectivo';
+        let clienteSeleccionado = 'general';
+        let clientePagoSeleccionado = null;
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('Inicializando aplicación POS...');
-            setupEventListeners();
-            loadDataFromFirebase();
-            inicializarFechas();
-            
-            // Inicializar estado del botón de crédito
-            setTimeout(() => {
-                const creditoBtn = document.querySelector('.payment-btn[onclick="selectPayment(\'credito\')"]');
-                if (creditoBtn) {
-                    creditoBtn.style.opacity = '0.5';
-                    creditoBtn.style.pointerEvents = 'none';
-                    creditoBtn.innerHTML = '🚫<br><strong>Crédito</strong><br><small>(Solo clientes registrados)</small>';
+            inicializarDatos();
+            cargarDatos();
+        });
+
+        // Inicializar datos por defecto
+        function inicializarDatos() {
+            // Productos por defecto
+            const productosDefault = {
+                'P001': {
+                    id: 'P001',
+                    nombre: 'Helado Vainilla',
+                    precio: 25.00,
+                    stock: 50,
+                    categoria: 'helados',
+                    imagen: '🍦'
+                },
+                'P002': {
+                    id: 'P002',
+                    nombre: 'Helado Chocolate',
+                    precio: 25.00,
+                    stock: 45,
+                    categoria: 'helados',
+                    imagen: '🍫'
+                },
+                'P003': {
+                    id: 'P003',
+                    nombre: 'Helado Fresa',
+                    precio: 28.00,
+                    stock: 30,
+                    categoria: 'helados',
+                    imagen: '🍓'
+                },
+                'P004': {
+                    id: 'P004',
+                    nombre: 'Paleta de Agua',
+                    precio: 15.00,
+                    stock: 60,
+                    categoria: 'paletas',
+                    imagen: '🧊'
                 }
-            }, 1000);
-        }
+            };
 
-        // Configurar event listeners
-        function setupEventListeners() {
-            // Cerrar modales al hacer clic fuera
-            window.onclick = function(event) {
-                const modalDeuda = document.getElementById('modalDeuda');
-                const modalPedido = document.getElementById('modalPedido');
-                
-                if (event.target === modalDeuda) {
-                    cerrarModalDeuda();
-                }
-                if (event.target === modalPedido) {
-                    cerrarModalPedido();
-                }
-            }
-        }
-
-        // Cargar datos desde Firebase
-        function loadDataFromFirebase() {
-            console.log('Cargando datos desde Firebase...');
-            
-            // Cargar ventas
-            const ventasRef = window.firebaseRef(window.firebaseDatabase, 'ventas');
-            window.firebaseOnValue(ventasRef, (snapshot) => {
-                const data = snapshot.val();
-                db.ventas = data || {};
-                actualizarResumenVentas();
-                
-                // Actualizar reportes si está activa esa sección
-                if (document.getElementById('reportes').classList.contains('active')) {
-                    setTimeout(generarReportes, 100);
-                }
-            });
-
-            // Cargar clientes
-            const clientesRef = window.firebaseRef(window.firebaseDatabase, 'clientes');
-            window.firebaseOnValue(clientesRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    db.clientes = data;
-                } else {
-                    initializeDefaultClients();
-                }
-                cargarClientes();
-            });
-
-            // Cargar deudas
-            const deudasRef = window.firebaseRef(window.firebaseDatabase, 'deudas');
-            window.firebaseOnValue(deudasRef, (snapshot) => {
-                const data = snapshot.val();
-                db.deudas = data || {};
-                cargarDeudas();
-            });
-
-            // Cargar pedidos
-            const pedidosRef = window.firebaseRef(window.firebaseDatabase, 'pedidos');
-            window.firebaseOnValue(pedidosRef, (snapshot) => {
-                const data = snapshot.val();
-                db.pedidos = data || {};
-                cargarPedidos();
-            });
-
-            // Cargar retiros
-            const retirosRef = window.firebaseRef(window.firebaseDatabase, 'retiros');
-            window.firebaseOnValue(retirosRef, (snapshot) => {
-                const data = snapshot.val();
-                db.retiros = data || {};
-                actualizarCaja();
-            });
-
-            // Cargar pagos de deuda
-            const pagosDeudasRef = window.firebaseRef(window.firebaseDatabase, 'pagosDeuda');
-            window.firebaseOnValue(pagosDeudasRef, (snapshot) => {
-                const data = snapshot.val();
-                db.pagosDeuda = data || {};
-            });
-
-            // Cargar pagos de pedidos
-            const pagosPedidosRef = window.firebaseRef(window.firebaseDatabase, 'pagosPedidos');
-            window.firebaseOnValue(pagosPedidosRef, (snapshot) => {
-                const data = snapshot.val();
-                db.pagosPedidos = data || {};
-            });
-        }
-
-        // Inicializar clientes por defecto
-        function initializeDefaultClients() {
-            const defaultClients = {
+            // Clientes por defecto
+            const clientesDefault = {
                 'general': {
                     id: 'general',
                     nombre: 'Cliente General',
                     telefono: '',
-                    deuda: 0,
-                    totalCompras: 0,
-                    ultimaCompra: null
+                    email: '',
+                    deuda: 0
                 }
             };
 
-            const clientesRef = window.firebaseRef(window.firebaseDatabase, 'clientes');
-            window.firebaseSet(clientesRef, defaultClients);
-            db.clientes = defaultClients;
+            // Guardar datos por defecto si no existen
+            database.ref('productos').once('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    database.ref('productos').set(productosDefault);
+                }
+            });
+
+            database.ref('clientes').once('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    database.ref('clientes').set(clientesDefault);
+                }
+            });
         }
 
-        // Funciones de navegación
-        function showSection(sectionName) {
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+        // Cargar datos desde Firebase
+        function cargarDatos() {
+            console.log('Cargando datos desde Firebase...');
             
-            document.getElementById(sectionName).classList.add('active');
-            event.target.classList.add('active');
-            
-            // Actualizar datos cuando se cambia de sección
-            if (sectionName === 'ventas') actualizarResumenVentas();
-            if (sectionName === 'creditos') {
-                forzarRecargaDatos();
+            // Cargar productos
+            database.ref('productos').on('value', (snapshot) => {
+                productos = snapshot.val() || {};
+                mostrarProductos();
+                actualizarReportes();
+            });
+
+            // Cargar clientes
+            database.ref('clientes').on('value', (snapshot) => {
+                clientes = snapshot.val() || {};
+                actualizarSelectClientes();
+                mostrarClientes();
                 cargarDeudas();
-            }
-            if (sectionName === 'pedidos') cargarPedidos();
-            if (sectionName === 'caja') actualizarCaja();
-            if (sectionName === 'clientes') cargarClientes();
-        }
-
-        function selectPayment(metodo) {
-            document.querySelectorAll('.payment-btn').forEach(btn => {
-                btn.classList.remove('selected');
             });
-            event.target.classList.add('selected');
-            metodoPagoSeleccionado = metodo;
+
+            // Cargar ventas
+            database.ref('ventas').on('value', (snapshot) => {
+                const ventasData = snapshot.val() || {};
+                ventas = Object.values(ventasData);
+                actualizarEstadisticas();
+                actualizarReportes();
+                mostrarVentasRecientes();
+            });
         }
 
-        // Funciones de ventas
+        // Mostrar productos en la grilla
+        function mostrarProductos() {
+            const grid = document.getElementById('productosGrid');
+            grid.innerHTML = '';
+
+            Object.values(productos).forEach(producto => {
+                const stockClass = producto.stock < 10 ? 'low-stock' : '';
+                const stockText = producto.stock < 10 ? 'low' : '';
+                
+                const card = document.createElement('div');
+                card.className = `product-card ${stockClass}`;
+                card.onclick = () => agregarAlCarrito(producto.id);
+                
+                card.innerHTML = `
+                    <div class="product-icon">${producto.imagen}</div>
+                    <div class="product-name">${producto.nombre}</div>
+                    <div class="product-price">$${producto.precio.toFixed(2)}</div>
+                    <div class="product-stock ${stockText}">Stock: ${producto.stock}</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Agregar producto al carrito
+        function agregarAlCarrito(productoId) {
+            const producto = productos[productoId];
+            if (!producto || producto.stock <= 0) {
+                alert('❌ Producto sin stock disponible');
+                return;
+            }
+
+            const itemExistente = carrito.find(item => item.id === productoId);
+            
+            if (itemExistente) {
+                if (itemExistente.cantidad < producto.stock) {
+                    itemExistente.cantidad++;
+                } else {
+                    alert('❌ No hay suficiente stock disponible');
+                    return;
+                }
+            } else {
+                carrito.push({
+                    id: productoId,
+                    nombre: producto.nombre,
+                    precio: producto.precio,
+                    cantidad: 1,
+                    imagen: producto.imagen
+                });
+            }
+
+            mostrarCarrito();
+            alert(`✅ ${producto.nombre} agregado al carrito`);
+        }
+
+        // Mostrar carrito
+        function mostrarCarrito() {
+            const carritoItems = document.getElementById('carritoItems');
+            const carritoTotal = document.getElementById('carritoTotal');
+            
+            carritoItems.innerHTML = '';
+            let total = 0;
+
+            carrito.forEach(item => {
+                const subtotal = item.precio * item.cantidad;
+                total += subtotal;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'cart-item';
+                itemDiv.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.imagen} ${item.nombre}</div>
+                        <div class="cart-item-price">$${item.precio.toFixed(2)} c/u</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="quantity-btn" onclick="cambiarCantidad('${item.id}', -1)">-</button>
+                        <span class="quantity-display">${item.cantidad}</span>
+                        <button class="quantity-btn" onclick="cambiarCantidad('${item.id}', 1)">+</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarDelCarrito('${item.id}')">🗑️</button>
+                    </div>
+                `;
+                carritoItems.appendChild(itemDiv);
+            });
+
+            carritoTotal.textContent = `Total: $${total.toFixed(2)}`;
+        }
+
+        // Cambiar cantidad en carrito
+        function cambiarCantidad(productoId, cambio) {
+            const item = carrito.find(item => item.id === productoId);
+            if (!item) return;
+
+            const nuevaCantidad = item.cantidad + cambio;
+            
+            if (nuevaCantidad <= 0) {
+                eliminarDelCarrito(productoId);
+                return;
+            }
+
+            const producto = productos[productoId];
+            if (nuevaCantidad > producto.stock) {
+                alert('❌ No hay suficiente stock disponible');
+                return;
+            }
+
+            item.cantidad = nuevaCantidad;
+            mostrarCarrito();
+        }
+
+        // Eliminar del carrito
+        function eliminarDelCarrito(productoId) {
+            const index = carrito.findIndex(item => item.id === productoId);
+            if (index > -1) {
+                const item = carrito[index];
+                carrito.splice(index, 1);
+                mostrarCarrito();
+                alert(`🗑️ ${item.nombre} eliminado del carrito`);
+            }
+        }
+
+        // Limpiar carrito
+        function limpiarCarrito() {
+            carrito = [];
+            mostrarCarrito();
+            alert('🗑️ Carrito limpiado');
+        }
+
+        // Seleccionar método de pago
+        function seleccionarPago(metodo) {
+            metodoPago = metodo;
+            
+            // Actualizar UI
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Validar si es crédito y no hay cliente seleccionado
+            if (metodo === 'credito' && clienteSeleccionado === 'general') {
+                alert('⚠️ Debe seleccionar un cliente registrado para ventas a crédito');
+                // Volver a efectivo
+                metodoPago = 'efectivo';
+                document.querySelector('.payment-method').classList.add('active');
+                event.target.classList.remove('active');
+            }
+        }
+
+        // Procesar venta
         function procesarVenta() {
-            const clienteId = document.getElementById('clienteVenta').value;
-            const monto = parseFloat(document.getElementById('montoVenta').value);
-            const descripcion = document.getElementById('descripcionVenta').value;
-
-            if (!monto || monto <= 0) {
-                mostrarAlerta('Por favor ingrese un monto válido', 'error');
+            if (carrito.length === 0) {
+                alert('❌ El carrito está vacío');
                 return;
             }
 
-            // Validar que para crédito se requiere cliente registrado
-            if (metodoPagoSeleccionado === 'credito' && clienteId === 'general') {
-                mostrarAlerta('Para ventas a crédito debe seleccionar un cliente registrado', 'error');
+            // Validar crédito
+            if (metodoPago === 'credito' && clienteSeleccionado === 'general') {
+                alert('❌ Debe seleccionar un cliente registrado para ventas a crédito');
                 return;
             }
 
+            const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const cliente = clientes[clienteSeleccionado];
+            
             const venta = {
                 id: Date.now().toString(),
-                clienteId: clienteId,
-                monto: monto,
-                descripcion: descripcion,
-                metodoPago: metodoPagoSeleccionado,
                 fecha: new Date().toISOString(),
-                fechaFormateada: new Date().toLocaleDateString('es-ES')
+                cliente: cliente.nombre,
+                clienteId: clienteSeleccionado,
+                items: [...carrito],
+                total: total,
+                metodoPago: metodoPago,
+                timestamp: Date.now()
             };
 
-            // Guardar venta en Firebase
-            const ventasRef = window.firebaseRef(window.firebaseDatabase, `ventas/${venta.id}`);
-            window.firebaseSet(ventasRef, venta);
+            console.log('Procesando venta:', venta);
 
-            // Actualizar cliente
-            const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteId}`);
-            window.firebaseGet(clienteRef).then((snapshot) => {
-                const cliente = snapshot.val();
-                if (cliente) {
-                    const updatedCliente = {
-                        ...cliente,
-                        totalCompras: cliente.totalCompras + monto,
-                        ultimaCompra: new Date().toLocaleDateString('es-ES')
-                    };
+            // Guardar venta
+            database.ref('ventas').push(venta).then(() => {
+                console.log('Venta guardada exitosamente');
+                
+                // Actualizar stock de productos
+                const updates = {};
+                carrito.forEach(item => {
+                    const nuevoStock = productos[item.id].stock - item.cantidad;
+                    updates[`productos/${item.id}/stock`] = nuevoStock;
+                });
 
-                    if (metodoPagoSeleccionado === 'credito') {
-                        updatedCliente.deuda = (cliente.deuda || 0) + monto;
-                        console.log('Actualizando deuda del cliente:', cliente.nombre, 'Nueva deuda:', updatedCliente.deuda);
-                    }
-
-                    window.firebaseSet(clienteRef, updatedCliente).then(() => {
-                        console.log('Cliente actualizado exitosamente');
-                        // Forzar recarga de deudas después de actualizar
-                        setTimeout(() => {
-                            cargarDeudas();
-                        }, 500);
-                    });
+                // Si es venta a crédito, actualizar deuda del cliente
+                if (metodoPago === 'credito' && clienteSeleccionado !== 'general') {
+                    const deudaActual = clientes[clienteSeleccionado].deuda || 0;
+                    const nuevaDeuda = deudaActual + total;
+                    updates[`clientes/${clienteSeleccionado}/deuda`] = nuevaDeuda;
+                    console.log(`Actualizando deuda del cliente ${clienteSeleccionado}: ${deudaActual} + ${total} = ${nuevaDeuda}`);
                 }
+
+                // Aplicar todas las actualizaciones
+                return database.ref().update(updates);
+            }).then(() => {
+                console.log('Stock y deudas actualizados exitosamente');
+                
+                // Limpiar carrito y resetear
+                limpiarCarrito();
+                clienteSeleccionado = 'general';
+                metodoPago = 'efectivo';
+                document.getElementById('clienteSelect').value = 'general';
+                
+                // Resetear métodos de pago
+                document.querySelectorAll('.payment-method').forEach(el => {
+                    el.classList.remove('active');
+                });
+                document.querySelector('.payment-method').classList.add('active');
+
+                alert(`✅ Venta procesada exitosamente por $${total.toFixed(2)}`);
+                
+                // Recargar datos para actualizar la UI
+                cargarDatos();
+            }).catch(error => {
+                console.error('Error al procesar venta:', error);
+                alert('❌ Error al procesar la venta');
             });
-
-            // Limpiar formulario
-            document.getElementById('montoVenta').value = '';
-            document.getElementById('descripcionVenta').value = '';
-            document.getElementById('clienteVenta').value = 'general';
-            selectPayment('efectivo');
-            document.querySelectorAll('.payment-btn')[0].classList.add('selected');
-            
-            mostrarAlerta('Venta procesada exitosamente', 'success');
         }
 
-        function actualizarResumenVentas() {
-            cargarClientes(); // Actualizar select de clientes
-            
-            const hoy = new Date().toLocaleDateString('es-ES');
-            const ventasHoy = Object.values(db.ventas).filter(v => v.fechaFormateada === hoy);
-            
-            const totalHoy = ventasHoy.reduce((sum, v) => sum + v.monto, 0);
-            const efectivoHoy = ventasHoy.filter(v => v.metodoPago === 'efectivo').reduce((sum, v) => sum + v.monto, 0);
-            const tarjetaHoy = ventasHoy.filter(v => v.metodoPago === 'tarjeta').reduce((sum, v) => sum + v.monto, 0);
-            const creditoHoy = ventasHoy.filter(v => v.metodoPago === 'credito').reduce((sum, v) => sum + v.monto, 0);
-            
-            document.getElementById('totalVentasHoy').textContent = `$${totalHoy.toFixed(2)}`;
-            document.getElementById('efectivoHoy').textContent = `$${efectivoHoy.toFixed(2)}`;
-            document.getElementById('tarjetaHoy').textContent = `$${tarjetaHoy.toFixed(2)}`;
-            document.getElementById('creditoHoy').textContent = `$${creditoHoy.toFixed(2)}`;
-        }
-
-        // Funciones de créditos y deudas
+        // Cargar deudas
         function cargarDeudas() {
             console.log('Cargando deudas...');
-            console.log('Clientes disponibles:', db.clientes);
+            console.log('Clientes disponibles:', clientes);
             
-            const tbody = document.querySelector('#tablaDeudas tbody');
-            tbody.innerHTML = '';
+            const tablaDeudas = document.getElementById('tablaDeudas');
+            const totalDeudas = document.getElementById('totalDeudas');
             
-            let totalDeudas = 0;
-            let clientesConDeuda = 0;
-            
-            // Buscar todos los clientes con deuda > 0
-            Object.values(db.clientes).forEach(cliente => {
-                console.log(`Cliente: ${cliente.nombre}, Deuda: ${cliente.deuda || 0}`);
+            let total = 0;
+            let clientesConDeuda = [];
+
+            // Buscar clientes con deuda
+            Object.values(clientes).forEach(cliente => {
+                const deuda = cliente.deuda || 0;
+                console.log(`Cliente: ${cliente.nombre}, Deuda: ${deuda}`);
                 
-                if (cliente.deuda && cliente.deuda > 0) {
-                    totalDeudas += cliente.deuda;
-                    clientesConDeuda++;
-                    
-                    console.log('Cliente con deuda encontrado:', cliente.nombre, cliente.deuda);
-                    
-                    const row = tbody.insertRow();
-                    row.innerHTML = `
-                        <td>${cliente.nombre}</td>
-                        <td>$${cliente.deuda.toFixed(2)}</td>
-                        <td>${cliente.ultimaCompra || 'N/A'}</td>
-                        <td>
-                            <button class="btn btn-success" onclick="abrirModalDeuda('${cliente.id}')">💰 Pagar</button>
-                            <button class="btn btn-danger" onclick="eliminarDeuda('${cliente.id}')">🗑️ Eliminar</button>
-                        </td>
-                    `;
+                if (deuda > 0) {
+                    clientesConDeuda.push({
+                        ...cliente,
+                        deuda: deuda
+                    });
+                    total += deuda;
                 }
             });
-            
-            console.log('Total deudas:', totalDeudas);
-            console.log('Clientes con deuda:', clientesConDeuda);
-            
-            document.getElementById('totalDeudas').textContent = `$${totalDeudas.toFixed(2)}`;
-            
-            if (clientesConDeuda === 0) {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td colspan="4" style="text-align: center; color: #666; padding: 20px;">
-                        No hay deudas registradas
-                    </td>
+
+            console.log(`Total deudas: ${total}`);
+            console.log(`Clientes con deuda: ${clientesConDeuda.length}`);
+
+            // Actualizar total
+            totalDeudas.textContent = `$${total.toFixed(2)}`;
+
+            // Crear tabla
+            if (clientesConDeuda.length === 0) {
+                tablaDeudas.innerHTML = `
+                    <div class="no-data">
+                        <p>✅ No hay deudas pendientes</p>
+                    </div>
                 `;
+            } else {
+                let tablaHTML = `
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Deuda Total</th>
+                                <th>Última Venta</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                clientesConDeuda.forEach(cliente => {
+                    // Buscar última venta del cliente
+                    const ultimaVenta = ventas
+                        .filter(v => v.clienteId === cliente.id)
+                        .sort((a, b) => b.timestamp - a.timestamp)[0];
+                    
+                    const fechaUltimaVenta = ultimaVenta ? 
+                        new Date(ultimaVenta.fecha).toLocaleDateString() : 
+                        'Sin ventas';
+
+                    tablaHTML += `
+                        <tr>
+                            <td>
+                                <strong>${cliente.nombre}</strong><br>
+                                <small>📞 ${cliente.telefono || 'Sin teléfono'}</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-danger">$${cliente.deuda.toFixed(2)}</span>
+                            </td>
+                            <td>${fechaUltimaVenta}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-success btn-sm" onclick="mostrarModalPago('${cliente.id}')">
+                                        💰 Pagar
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="verHistorialCredito('${cliente.id}')">
+                                        📋 Historial
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tablaHTML += `
+                        </tbody>
+                    </table>
+                `;
+
+                tablaDeudas.innerHTML = tablaHTML;
             }
         }
 
-        function filtrarDeudas(busqueda) {
-            const filas = document.querySelectorAll('#tablaDeudas tbody tr');
-            filas.forEach(fila => {
-                const nombreCliente = fila.cells[0].textContent.toLowerCase();
-                if (nombreCliente.includes(busqueda.toLowerCase())) {
-                    fila.style.display = '';
-                } else {
-                    fila.style.display = 'none';
-                }
-            });
-        }
+        // Mostrar modal de pago
+        function mostrarModalPago(clienteId) {
+            const cliente = clientes[clienteId];
+            if (!cliente) return;
 
-        function abrirModalDeuda(clienteId) {
-            clienteDeudaActual = clienteId;
-            const cliente = db.clientes[clienteId];
-            document.getElementById('tituloModalDeuda').textContent = `Gestionar Deuda - ${cliente.nombre}`;
-            document.getElementById('modalDeuda').style.display = 'block';
-        }
+            clientePagoSeleccionado = cliente;
+            
+            const infoPago = document.getElementById('infoPagoCliente');
+            infoPago.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Cliente</label>
+                    <input type="text" class="form-input" value="${cliente.nombre}" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Deuda Actual</label>
+                    <input type="text" class="form-input" value="$${cliente.deuda.toFixed(2)}" readonly>
+                </div>
+            `;
 
-        function cerrarModalDeuda() {
-            document.getElementById('modalDeuda').style.display = 'none';
             document.getElementById('montoPago').value = '';
-            clienteDeudaActual = null;
+            document.getElementById('montoPago').max = cliente.deuda;
+            document.getElementById('modalPago').classList.add('active');
         }
 
-        function registrarPago() {
+        // Cerrar modal de pago
+        function cerrarModalPago() {
+            document.getElementById('modalPago').classList.remove('active');
+            clientePagoSeleccionado = null;
+        }
+
+        // Procesar pago
+        function procesarPago() {
+            if (!clientePagoSeleccionado) return;
+
             const monto = parseFloat(document.getElementById('montoPago').value);
             
             if (!monto || monto <= 0) {
-                mostrarAlerta('Por favor ingrese un monto válido', 'error');
+                alert('❌ Ingrese un monto válido');
                 return;
             }
-            
-            const cliente = db.clientes[clienteDeudaActual];
-            
-            if (monto > cliente.deuda) {
-                mostrarAlerta('El monto no puede ser mayor a la deuda', 'error');
+
+            if (monto > clientePagoSeleccionado.deuda) {
+                alert('❌ El monto no puede ser mayor a la deuda');
                 return;
             }
-            
-            // Registrar pago
-            const pagoId = Date.now().toString();
-            const pago = {
-                id: pagoId,
-                clienteId: clienteDeudaActual,
-                clienteNombre: cliente.nombre,
-                monto: monto,
-                fecha: new Date().toISOString(),
-                fechaFormateada: new Date().toLocaleDateString('es-ES')
-            };
 
-            const pagoRef = window.firebaseRef(window.firebaseDatabase, `pagosDeuda/${pagoId}`);
-            window.firebaseSet(pagoRef, pago);
+            const nuevaDeuda = clientePagoSeleccionado.deuda - monto;
             
-            // Reducir deuda
-            const nuevaDeuda = cliente.deuda - monto;
-            const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteDeudaActual}/deuda`);
-            window.firebaseSet(clienteRef, nuevaDeuda);
-            
-            // Si la deuda llega a 0, remover de deudas activas
-            if (nuevaDeuda <= 0) {
-                const deudaRef = window.firebaseRef(window.firebaseDatabase, `deudas/${clienteDeudaActual}`);
-                window.firebaseRemove(deudaRef);
-            }
-            
-            mostrarAlerta('Pago registrado exitosamente', 'success');
-            cerrarModalDeuda();
-        }
-
-        function verHistorialDeuda() {
-            const cliente = db.clientes[clienteDeudaActual];
-            const pagos = Object.values(db.pagosDeuda).filter(p => p.clienteId === clienteDeudaActual);
-            
-            let historial = `<h4>Historial de ${cliente.nombre}</h4>`;
-            historial += `<p><strong>Deuda Actual:</strong> $${cliente.deuda.toFixed(2)}</p>`;
-            historial += `<h5>Pagos Realizados:</h5>`;
-            
-            if (pagos.length === 0) {
-                historial += `<p>No hay pagos registrados</p>`;
-            } else {
-                historial += `<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                    <thead>
-                        <tr style="background: #f8f9fa;">
-                            <th style="padding: 8px; border: 1px solid #ddd;">Fecha</th>
-                            <th style="padding: 8px; border: 1px solid #ddd;">Monto</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-                
-                pagos.forEach(pago => {
-                    historial += `
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${pago.fechaFormateada}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">$${pago.monto.toFixed(2)}</td>
-                        </tr>`;
-                });
-                
-                historial += `</tbody></table>`;
-            }
-            
-            historial += `<button class="btn" onclick="cerrarModalDeuda()" style="margin-top: 15px;">Cerrar</button>`;
-            
-            document.getElementById('contenidoModalPedido').innerHTML = historial;
-            document.getElementById('modalPedido').style.display = 'block';
-        }
-
-        function eliminarDeuda(clienteId) {
-            const cliente = db.clientes[clienteId];
-            if (confirm(`¿Está seguro de que desea eliminar la deuda de ${cliente.nombre}?`)) {
-                // Eliminar deuda
-                const deudaRef = window.firebaseRef(window.firebaseDatabase, `deudas/${clienteId}`);
-                window.firebaseRemove(deudaRef);
-                
-                // Resetear deuda del cliente
-                const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteId}/deuda`);
-                window.firebaseSet(clienteRef, 0);
-                
-                mostrarAlerta('Deuda eliminada exitosamente', 'success');
-            }
-        }
-
-        // Funciones de pedidos
-        function crearPedido() {
-            const proveedor = document.getElementById('nombreProveedor').value.trim();
-            const nota = document.getElementById('notaPedido').value.trim();
-            
-            if (!proveedor) {
-                mostrarAlerta('Por favor ingrese el nombre del proveedor', 'error');
-                return;
-            }
-            
-            if (!nota) {
-                mostrarAlerta('Por favor ingrese la nota del pedido', 'error');
-                return;
-            }
-            
-            const pedidoId = Date.now().toString();
-            const pedido = {
-                id: pedidoId,
-                proveedor: proveedor,
-                nota: nota,
-                estado: 'pendiente',
-                monto: 0,
-                deudaRestante: 0,
-                fecha: new Date().toISOString(),
-                fechaFormateada: new Date().toLocaleDateString('es-ES')
-            };
-            
-            const pedidoRef = window.firebaseRef(window.firebaseDatabase, `pedidos/${pedidoId}`);
-            window.firebaseSet(pedidoRef, pedido);
-            
-            document.getElementById('nombreProveedor').value = '';
-            document.getElementById('notaPedido').value = '';
-            
-            mostrarAlerta('Pedido enviado exitosamente', 'success');
-        }
-
-        function cargarPedidos() {
-            const tbody = document.querySelector('#tablaPedidos tbody');
-            tbody.innerHTML = '';
-            
-            let totalProveedores = 0;
-            
-            Object.values(db.pedidos).forEach(pedido => {
-                if (pedido.deudaRestante > 0) {
-                    totalProveedores += pedido.deudaRestante;
-                }
-                
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${pedido.proveedor}</td>
-                    <td>${pedido.fechaFormateada}</td>
-                    <td>
-                        <span class="status-${pedido.estado}">
-                            ${pedido.estado === 'pendiente' ? '⏳ Pendiente' : 
-                              pedido.estado === 'aceptado' ? '✅ Aceptado' : 
-                              '✅ Pagado'}
-                        </span>
-                    </td>
-                    <td>$${pedido.monto.toFixed(2)}</td>
-                    <td>$${pedido.deudaRestante.toFixed(2)}</td>
-                    <td>
-                        ${pedido.estado === 'pendiente' ? 
-                            `<button class="btn btn-success" onclick="aceptarPedido('${pedido.id}')">✅ Aceptar</button>` :
-                            pedido.deudaRestante > 0 ? 
-                            `<button class="btn btn-warning" onclick="pagarPedido('${pedido.id}')">💰 Pagar</button>` :
-                            '<span style="color: green;">✅ Completado</span>'
-                        }
-                        <button class="btn btn-danger" onclick="eliminarPedido('${pedido.id}')">🗑️ Eliminar</button>
-                    </td>
-                `;
-            });
-            
-            document.getElementById('totalProveedores').textContent = `$${totalProveedores.toFixed(2)}`;
-        }
-
-        function aceptarPedido(pedidoId) {
-            const monto = prompt('Ingrese el monto total del pedido:');
-            
-            if (!monto || isNaN(monto) || parseFloat(monto) <= 0) {
-                mostrarAlerta('Por favor ingrese un monto válido', 'error');
-                return;
-            }
-            
-            const pedidoRef = window.firebaseRef(window.firebaseDatabase, `pedidos/${pedidoId}`);
-            window.firebaseGet(pedidoRef).then((snapshot) => {
-                const pedido = snapshot.val();
-                const updatedPedido = {
-                    ...pedido,
-                    estado: 'aceptado',
-                    monto: parseFloat(monto),
-                    deudaRestante: parseFloat(monto)
+            // Actualizar deuda en Firebase
+            database.ref(`clientes/${clientePagoSeleccionado.id}/deuda`).set(nuevaDeuda).then(() => {
+                // Registrar el pago
+                const pago = {
+                    id: Date.now().toString(),
+                    fecha: new Date().toISOString(),
+                    clienteId: clientePagoSeleccionado.id,
+                    cliente: clientePagoSeleccionado.nombre,
+                    monto: monto,
+                    deudaAnterior: clientePagoSeleccionado.deuda,
+                    deudaNueva: nuevaDeuda,
+                    timestamp: Date.now()
                 };
-                window.firebaseSet(pedidoRef, updatedPedido);
-            });
-            
-            mostrarAlerta('Pedido aceptado exitosamente', 'success');
-        }
 
-        function pagarPedido(pedidoId) {
-            pedidoActual = pedidoId;
-            const pedido = db.pedidos[pedidoId];
-            
-            let contenido = `
-                <h4>Pagar Pedido - ${pedido.proveedor}</h4>
-                <p><strong>Deuda Restante:</strong> $${pedido.deudaRestante.toFixed(2)}</p>
-                <div class="form-group">
-                    <label>Monto del Pago:</label>
-                    <input type="number" id="montoPagoPedido" placeholder="0.00" step="0.01" min="0" max="${pedido.deudaRestante}">
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-success" onclick="procesarPagoPedido()">💰 Procesar Pago</button>
-                    <button class="btn" onclick="cerrarModalPedido()">❌ Cancelar</button>
-                </div>
-            `;
-            
-            document.getElementById('contenidoModalPedido').innerHTML = contenido;
-            document.getElementById('modalPedido').style.display = 'block';
-        }
-
-        function procesarPagoPedido() {
-            const monto = parseFloat(document.getElementById('montoPagoPedido').value);
-            const pedido = db.pedidos[pedidoActual];
-            
-            if (!monto || monto <= 0) {
-                mostrarAlerta('Por favor ingrese un monto válido', 'error');
-                return;
-            }
-            
-            if (monto > pedido.deudaRestante) {
-                mostrarAlerta('El monto no puede ser mayor a la deuda restante', 'error');
-                return;
-            }
-            
-            // Registrar pago
-            const pagoId = Date.now().toString();
-            const pago = {
-                id: pagoId,
-                pedidoId: pedidoActual,
-                proveedor: pedido.proveedor,
-                monto: monto,
-                fecha: new Date().toISOString(),
-                fechaFormateada: new Date().toLocaleDateString('es-ES')
-            };
-
-            const pagoRef = window.firebaseRef(window.firebaseDatabase, `pagosPedidos/${pagoId}`);
-            window.firebaseSet(pagoRef, pago);
-            
-            // Reducir deuda
-            const nuevaDeuda = pedido.deudaRestante - monto;
-            const pedidoRef = window.firebaseRef(window.firebaseDatabase, `pedidos/${pedidoActual}`);
-            
-            const updatedPedido = {
-                ...pedido,
-                deudaRestante: nuevaDeuda,
-                estado: nuevaDeuda <= 0 ? 'pagado' : 'aceptado'
-            };
-            
-            window.firebaseSet(pedidoRef, updatedPedido);
-            
-            mostrarAlerta('Pago procesado exitosamente', 'success');
-            cerrarModalPedido();
-        }
-
-        function eliminarPedido(pedidoId) {
-            const pedido = db.pedidos[pedidoId];
-            if (confirm(`¿Está seguro de que desea eliminar el pedido de ${pedido.proveedor}?`)) {
-                const pedidoRef = window.firebaseRef(window.firebaseDatabase, `pedidos/${pedidoId}`);
-                window.firebaseRemove(pedidoRef);
-                mostrarAlerta('Pedido eliminado exitosamente', 'success');
-            }
-        }
-
-        function cerrarModalPedido() {
-            document.getElementById('modalPedido').style.display = 'none';
-            pedidoActual = null;
-        }
-
-        // Funciones de caja
-        function actualizarCaja() {
-            const hoy = new Date().toLocaleDateString('es-ES');
-            const ventasEfectivoHoy = Object.values(db.ventas)
-                .filter(v => v.fechaFormateada === hoy && v.metodoPago === 'efectivo')
-                .reduce((sum, v) => sum + v.monto, 0);
-            
-            const retirosHoy = Object.values(db.retiros)
-                .filter(r => r.fechaFormateada === hoy)
-                .reduce((sum, r) => sum + r.monto, 0);
-            
-            const dineroDisponible = ventasEfectivoHoy - retirosHoy;
-            
-            document.getElementById('dineroDisponible').textContent = `$${dineroDisponible.toFixed(2)}`;
-            document.getElementById('ventasEfectivoHoy').textContent = `$${ventasEfectivoHoy.toFixed(2)}`;
-            document.getElementById('retirosHoy').textContent = `$${retirosHoy.toFixed(2)}`;
-            document.getElementById('saldoActual').textContent = `$${dineroDisponible.toFixed(2)}`;
-            
-            cargarHistorialRetiros();
-        }
-
-        function retirarDinero() {
-            const monto = parseFloat(document.getElementById('montoRetiro').value);
-            const motivo = document.getElementById('motivoRetiro').value.trim();
-            
-            if (!monto || monto <= 0) {
-                mostrarAlerta('Por favor ingrese un monto válido', 'error');
-                return;
-            }
-            
-            if (!motivo) {
-                mostrarAlerta('Por favor ingrese el motivo del retiro', 'error');
-                return;
-            }
-            
-            // Verificar disponibilidad
-            const dineroDisponible = parseFloat(document.getElementById('dineroDisponible').textContent.replace('$', '').replace(',', ''));
-            
-            if (monto > dineroDisponible) {
-                mostrarAlerta('No hay suficiente dinero disponible en caja', 'error');
-                return;
-            }
-            
-            const retiroId = Date.now().toString();
-            const retiro = {
-                id: retiroId,
-                monto: monto,
-                motivo: motivo,
-                tipo: 'retiro',
-                fecha: new Date().toISOString(),
-                fechaFormateada: new Date().toLocaleDateString('es-ES')
-            };
-            
-            const retiroRef = window.firebaseRef(window.firebaseDatabase, `retiros/${retiroId}`);
-            window.firebaseSet(retiroRef, retiro);
-            
-            document.getElementById('montoRetiro').value = '';
-            document.getElementById('motivoRetiro').value = '';
-            
-            mostrarAlerta('Retiro procesado exitosamente', 'success');
-        }
-
-        function realizarCierreCaja() {
-            const dineroDisponible = parseFloat(document.getElementById('dineroDisponible').textContent.replace('$', '').replace(',', ''));
-            
-            if (dineroDisponible <= 0) {
-                mostrarAlerta('No hay dinero disponible para cerrar caja', 'error');
-                return;
-            }
-            
-            const cierreId = Date.now().toString();
-            const cierre = {
-                id: cierreId,
-                monto: dineroDisponible,
-                motivo: 'Cierre de caja',
-                tipo: 'cierre',
-                fecha: new Date().toISOString(),
-                fechaFormateada: new Date().toLocaleDateString('es-ES')
-            };
-            
-            const cierreRef = window.firebaseRef(window.firebaseDatabase, `retiros/${cierreId}`);
-            window.firebaseSet(cierreRef, cierre);
-            
-            mostrarAlerta(`Cierre de caja realizado: $${dineroDisponible.toFixed(2)}`, 'success');
-        }
-
-        function cargarHistorialRetiros() {
-            const tbody = document.querySelector('#tablaRetiros tbody');
-            tbody.innerHTML = '';
-            
-            Object.values(db.retiros).slice().reverse().forEach(retiro => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${retiro.fechaFormateada}</td>
-                    <td>$${retiro.monto.toFixed(2)}</td>
-                    <td>${retiro.motivo}</td>
-                    <td>
-                        <span class="status-${retiro.tipo === 'cierre' ? 'accepted' : 'pending'}">
-                            ${retiro.tipo === 'cierre' ? '🔒 Cierre' : '💸 Retiro'}
-                        </span>
-                    </td>
-                `;
+                return database.ref('pagos').push(pago);
+            }).then(() => {
+                alert(`✅ Pago de $${monto.toFixed(2)} registrado exitosamente`);
+                cerrarModalPago();
+                cargarDatos(); // Recargar datos
+            }).catch(error => {
+                console.error('Error al procesar pago:', error);
+                alert('❌ Error al procesar el pago');
             });
         }
 
-        // Funciones de reportes
-        function generarReportes() {
-            const fechaInicio = document.getElementById('fechaInicio').value;
-            const fechaFin = document.getElementById('fechaFin').value;
+        // Recargar datos manualmente
+        function recargarDatos() {
+            console.log('Forzando recarga de datos...');
             
-            if (!fechaInicio || !fechaFin) {
-                mostrarAlerta('Por favor seleccione las fechas de inicio y fin', 'error');
-                return;
-            }
-            
-            const inicio = new Date(fechaInicio);
-            const fin = new Date(fechaFin);
-            fin.setHours(23, 59, 59, 999); // Incluir todo el día final
-            
-            // Filtrar datos por fechas
-            const ventasFiltradas = Object.values(db.ventas).filter(v => {
-                const fechaVenta = new Date(v.fecha);
-                return fechaVenta >= inicio && fechaVenta <= fin;
+            // Recargar clientes
+            database.ref('clientes').once('value', (snapshot) => {
+                clientes = snapshot.val() || {};
+                console.log('Clientes recargados:', clientes);
+                cargarDeudas();
+                mostrarClientes();
+                actualizarSelectClientes();
             });
-            
-            const pagosFiltrados = Object.values(db.pagosDeuda).filter(p => {
-                const fechaPago = new Date(p.fecha);
-                return fechaPago >= inicio && fechaPago <= fin;
+
+            // Recargar ventas
+            database.ref('ventas').once('value', (snapshot) => {
+                const ventasData = snapshot.val() || {};
+                ventas = Object.values(ventasData);
+                actualizarEstadisticas();
+                actualizarReportes();
             });
-            
-            const retirosFiltrados = Object.values(db.retiros).filter(r => {
-                const fechaRetiro = new Date(r.fecha);
-                return fechaRetiro >= inicio && fechaRetiro <= fin;
-            });
-            
-            // Calcular totales de ventas
-            const totalVentas = ventasFiltradas.reduce((sum, v) => sum + v.monto, 0);
-            const efectivo = ventasFiltradas.filter(v => v.metodoPago === 'efectivo').reduce((sum, v) => sum + v.monto, 0);
-            const tarjeta = ventasFiltradas.filter(v => v.metodoPago === 'tarjeta').reduce((sum, v) => sum + v.monto, 0);
-            const credito = ventasFiltradas.filter(v => v.metodoPago === 'credito').reduce((sum, v) => sum + v.monto, 0);
-            
-            // Calcular deudas y pagos
-            const totalPagos = pagosFiltrados.reduce((sum, p) => sum + p.monto, 0);
-            const deudasActivas = Object.values(db.clientes).reduce((sum, c) => sum + (c.deuda || 0), 0);
-            
-            // Calcular cierres
-            const cierres = retirosFiltrados.filter(r => r.tipo === 'cierre').reduce((sum, r) => sum + r.monto, 0);
-            const retiros = retirosFiltrados.filter(r => r.tipo === 'retiro').reduce((sum, r) => sum + r.monto, 0);
-            
-            // Mostrar resultados
-            document.getElementById('reporteTotalVentas').textContent = `$${totalVentas.toFixed(2)}`;
-            document.getElementById('reporteEfectivo').textContent = `$${efectivo.toFixed(2)}`;
-            document.getElementById('reporteTarjeta').textContent = `$${tarjeta.toFixed(2)}`;
-            document.getElementById('reporteCredito').textContent = `$${credito.toFixed(2)}`;
-            
-            document.getElementById('reporteDeudas').textContent = `$${deudasActivas.toFixed(2)}`;
-            document.getElementById('reportePagos').textContent = `$${totalPagos.toFixed(2)}`;
-            
-            document.getElementById('reporteCierres').textContent = `$${cierres.toFixed(2)}`;
-            document.getElementById('reporteRetiros').textContent = `$${retiros.toFixed(2)}`;
-            
-            mostrarAlerta(`Reportes generados para el período ${fechaInicio} - ${fechaFin}`, 'success');
+
+            alert('🔄 Datos recargados');
         }
 
-        // Funciones de clientes
-        function agregarCliente() {
-            const nombre = document.getElementById('nombreCliente').value.trim();
-            const telefono = document.getElementById('telefonoCliente').value.trim();
+        // Ver historial de crédito
+        function verHistorialCredito(clienteId) {
+            const cliente = clientes[clienteId];
+            const ventasCliente = ventas.filter(v => v.clienteId === clienteId && v.metodoPago === 'credito');
             
-            if (!nombre) {
-                mostrarAlerta('Por favor ingrese el nombre del cliente', 'error');
-                return;
+            let historial = `📋 Historial de Crédito - ${cliente.nombre}\n\n`;
+            
+            if (ventasCliente.length === 0) {
+                historial += 'No hay ventas a crédito registradas.';
+            } else {
+                ventasCliente.forEach(venta => {
+                    historial += `📅 ${new Date(venta.fecha).toLocaleDateString()}\n`;
+                    historial += `💰 Total: $${venta.total.toFixed(2)}\n`;
+                    historial += `📦 Productos: ${venta.items.map(item => `${item.nombre} (${item.cantidad})`).join(', ')}\n\n`;
+                });
             }
             
-            // Verificar si el cliente ya existe
-            const clienteExiste = Object.values(db.clientes).find(c => c.nombre.toLowerCase() === nombre.toLowerCase());
-            if (clienteExiste) {
-                mostrarAlerta('Ya existe un cliente con ese nombre', 'error');
-                return;
-            }
-            
-            const clienteId = Date.now().toString();
-            const cliente = {
-                id: clienteId,
-                nombre: nombre,
-                telefono: telefono,
-                deuda: 0,
-                totalCompras: 0,
-                ultimaCompra: null
-            };
-            
-            const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteId}`);
-            window.firebaseSet(clienteRef, cliente);
-            
-            document.getElementById('nombreCliente').value = '';
-            document.getElementById('telefonoCliente').value = '';
-            
-            mostrarAlerta('Cliente agregado exitosamente', 'success');
+            alert(historial);
         }
 
-        function cargarClientes() {
-            // Actualizar select de ventas
-            const selectVentas = document.getElementById('clienteVenta');
-            selectVentas.innerHTML = '<option value="general">Cliente General</option>';
+        // Actualizar select de clientes
+        function actualizarSelectClientes() {
+            const select = document.getElementById('clienteSelect');
+            select.innerHTML = '<option value="general">Cliente General</option>';
             
-            Object.values(db.clientes).forEach(cliente => {
+            Object.values(clientes).forEach(cliente => {
                 if (cliente.id !== 'general') {
                     const option = document.createElement('option');
                     option.value = cliente.id;
                     option.textContent = cliente.nombre;
-                    selectVentas.appendChild(option);
+                    select.appendChild(option);
                 }
             });
 
-            // Agregar event listener para controlar métodos de pago
-            selectVentas.addEventListener('change', function() {
-                const creditoBtn = document.querySelector('.payment-btn[onclick="selectPayment(\'credito\')"]');
-                if (this.value === 'general') {
-                    // Deshabilitar crédito para cliente general
-                    creditoBtn.style.opacity = '0.5';
-                    creditoBtn.style.pointerEvents = 'none';
-                    creditoBtn.innerHTML = '🚫<br><strong>Crédito</strong><br><small>(Solo clientes registrados)</small>';
-                    
-                    // Si estaba seleccionado crédito, cambiar a efectivo
-                    if (metodoPagoSeleccionado === 'credito') {
-                        selectPayment('efectivo');
-                        document.querySelectorAll('.payment-btn')[0].classList.add('selected');
-                        creditoBtn.classList.remove('selected');
-                    }
-                } else {
-                    // Habilitar crédito para clientes registrados
-                    creditoBtn.style.opacity = '1';
-                    creditoBtn.style.pointerEvents = 'auto';
-                    creditoBtn.innerHTML = '📝<br><strong>Crédito</strong>';
+            select.addEventListener('change', function() {
+                clienteSeleccionado = this.value;
+                
+                // Si selecciona cliente general y método es crédito, cambiar a efectivo
+                if (clienteSeleccionado === 'general' && metodoPago === 'credito') {
+                    metodoPago = 'efectivo';
+                    document.querySelectorAll('.payment-method').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    document.querySelector('.payment-method').classList.add('active');
+                    alert('⚠️ Cambiado a efectivo. No se puede vender a crédito a cliente general.');
                 }
             });
+        }
+
+        // Mostrar clientes
+        function mostrarClientes() {
+            const tablaClientes = document.getElementById('tablaClientes');
             
-            // Actualizar tabla de clientes
-            if (document.getElementById('clientes').classList.contains('active')) {
-                const tbody = document.querySelector('#tablaClientes tbody');
-                tbody.innerHTML = '';
-                
-                Object.values(db.clientes).forEach(cliente => {
-                    if (cliente.id !== 'general') {
-                        const row = tbody.insertRow();
-                        row.innerHTML = `
-                            <td>${cliente.nombre}</td>
-                            <td>${cliente.telefono || 'No registrado'}</td>
-                            <td>$${cliente.deuda.toFixed(2)}</td>
-                            <td>$${cliente.totalCompras.toFixed(2)}</td>
-                            <td>${cliente.ultimaCompra || 'Nunca'}</td>
+            let tablaHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Deuda</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            Object.values(clientes).forEach(cliente => {
+                if (cliente.id !== 'general') {
+                    const deuda = cliente.deuda || 0;
+                    const badgeClass = deuda > 0 ? 'badge-danger' : 'badge-success';
+                    
+                    tablaHTML += `
+                        <tr>
+                            <td><strong>${cliente.nombre}</strong></td>
+                            <td>${cliente.telefono || '-'}</td>
+                            <td>${cliente.email || '-'}</td>
+                            <td><span class="badge ${badgeClass}">$${deuda.toFixed(2)}</span></td>
                             <td>
-                                <button class="btn btn-danger" onclick="eliminarCliente('${cliente.id}')">🗑️ Eliminar</button>
+                                <div class="action-buttons">
+                                    <button class="btn btn-danger btn-sm" onclick="eliminarCliente('${cliente.id}')" ${deuda > 0 ? 'disabled' : ''}>
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
                             </td>
-                        `;
-                    }
+                        </tr>
+                    `;
+                }
+            });
+
+            tablaHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            tablaClientes.innerHTML = tablaHTML;
+        }
+
+        // Mostrar modal cliente
+        function mostrarModalCliente() {
+            document.getElementById('modalCliente').classList.add('active');
+        }
+
+        // Cerrar modal cliente
+        function cerrarModalCliente() {
+            document.getElementById('modalCliente').classList.remove('active');
+            document.getElementById('nombreCliente').value = '';
+            document.getElementById('telefonoCliente').value = '';
+            document.getElementById('emailCliente').value = '';
+        }
+
+        // Agregar cliente
+        function agregarCliente() {
+            const nombre = document.getElementById('nombreCliente').value.trim();
+            const telefono = document.getElementById('telefonoCliente').value.trim();
+            const email = document.getElementById('emailCliente').value.trim();
+
+            if (!nombre) {
+                alert('❌ El nombre es obligatorio');
+                return;
+            }
+
+            const clienteId = Date.now().toString();
+            const nuevoCliente = {
+                id: clienteId,
+                nombre: nombre,
+                telefono: telefono,
+                email: email,
+                deuda: 0
+            };
+
+            database.ref(`clientes/${clienteId}`).set(nuevoCliente).then(() => {
+                alert('✅ Cliente agregado exitosamente');
+                cerrarModalCliente();
+            }).catch(error => {
+                console.error('Error al agregar cliente:', error);
+                alert('❌ Error al agregar cliente');
+            });
+        }
+
+        // Eliminar cliente
+        function eliminarCliente(clienteId) {
+            const cliente = clientes[clienteId];
+            
+            if (cliente.deuda > 0) {
+                alert('❌ No se puede eliminar un cliente con deuda pendiente');
+                return;
+            }
+
+            if (confirm(`¿Está seguro de eliminar al cliente ${cliente.nombre}?`)) {
+                database.ref(`clientes/${clienteId}`).remove().then(() => {
+                    alert('✅ Cliente eliminado exitosamente');
+                }).catch(error => {
+                    console.error('Error al eliminar cliente:', error);
+                    alert('❌ Error al eliminar cliente');
                 });
             }
         }
 
-        function eliminarCliente(clienteId) {
-            const cliente = db.clientes[clienteId];
-            
-            if (cliente.deuda > 0) {
-                mostrarAlerta('No se puede eliminar un cliente con deuda pendiente', 'error');
+        // Actualizar estadísticas
+        function actualizarEstadisticas() {
+            const hoy = new Date().toDateString();
+            const ventasHoy = ventas.filter(venta => 
+                new Date(venta.fecha).toDateString() === hoy
+            );
+
+            const totalHoy = ventasHoy.reduce((sum, venta) => sum + venta.total, 0);
+            const efectivoHoy = ventasHoy
+                .filter(v => v.metodoPago === 'efectivo')
+                .reduce((sum, venta) => sum + venta.total, 0);
+            const transferenciaHoy = ventasHoy
+                .filter(v => v.metodoPago === 'transferencia')
+                .reduce((sum, venta) => sum + venta.total, 0);
+            const creditoHoy = ventasHoy
+                .filter(v => v.metodoPago === 'credito')
+                .reduce((sum, venta) => sum + venta.total, 0);
+
+            // Actualizar dashboard
+            document.getElementById('ventasHoy').textContent = `$${totalHoy.toFixed(2)}`;
+            document.getElementById('ventasEfectivo').textContent = `$${efectivoHoy.toFixed(2)}`;
+            document.getElementById('ventasTransferencia').textContent = `$${transferenciaHoy.toFixed(2)}`;
+            document.getElementById('ventasCredito').textContent = `$${creditoHoy.toFixed(2)}`;
+
+            // Actualizar caja
+            document.getElementById('cajaEfectivo').textContent = `$${efectivoHoy.toFixed(2)}`;
+            document.getElementById('cajaTransferencias').textContent = `$${transferenciaHoy.toFixed(2)}`;
+            document.getElementById('cajaPendiente').textContent = `$${creditoHoy.toFixed(2)}`;
+            document.getElementById('cajaTotal').textContent = `$${totalHoy.toFixed(2)}`;
+        }
+
+        // Actualizar reportes
+        function actualizarReportes() {
+            const hoy = new Date();
+            const inicioSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay()));
+            const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+            const ventasHoy = ventas.filter(venta => 
+                new Date(venta.fecha).toDateString() === new Date().toDateString()
+            );
+            const ventasSemana = ventas.filter(venta => 
+                new Date(venta.fecha) >= inicioSemana
+            );
+            const ventasMes = ventas.filter(venta => 
+                new Date(venta.fecha) >= inicioMes
+            );
+
+            const totalHoy = ventasHoy.reduce((sum, venta) => sum + venta.total, 0);
+            const totalSemana = ventasSemana.reduce((sum, venta) => sum + venta.total, 0);
+            const totalMes = ventasMes.reduce((sum, venta) => sum + venta.total, 0);
+
+            document.getElementById('reporteVentasHoy').textContent = `$${totalHoy.toFixed(2)}`;
+            document.getElementById('reporteVentasSemana').textContent = `$${totalSemana.toFixed(2)}`;
+            document.getElementById('reporteVentasMes').textContent = `$${totalMes.toFixed(2)}`;
+
+            // Producto más vendido
+            const productosVendidos = {};
+            ventas.forEach(venta => {
+                venta.items.forEach(item => {
+                    productosVendidos[item.nombre] = (productosVendidos[item.nombre] || 0) + item.cantidad;
+                });
+            });
+
+            const productoMasVendido = Object.keys(productosVendidos).reduce((a, b) => 
+                productosVendidos[a] > productosVendidos[b] ? a : b, 
+                'Ninguno'
+            );
+
+            document.getElementById('reporteProductoMasVendido').textContent = productoMasVendido;
+        }
+
+        // Mostrar ventas recientes
+        function mostrarVentasRecientes() {
+            const ventasRecientes = document.getElementById('ventasRecientes');
+            const ventasOrdenadas = ventas
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .slice(0, 10);
+
+            if (ventasOrdenadas.length === 0) {
+                ventasRecientes.innerHTML = '<div class="no-data"><p>No hay ventas registradas</p></div>';
                 return;
             }
+
+            let tablaHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Método</th>
+                            <th>Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            ventasOrdenadas.forEach(venta => {
+                const fecha = new Date(venta.fecha).toLocaleString();
+                const items = venta.items.map(item => `${item.nombre} (${item.cantidad})`).join(', ');
+                const metodoBadge = venta.metodoPago === 'efectivo' ? 'badge-success' : 
+                                  venta.metodoPago === 'transferencia' ? 'badge-warning' : 'badge-danger';
+
+                tablaHTML += `
+                    <tr>
+                        <td>${fecha}</td>
+                        <td>${venta.cliente}</td>
+                        <td>$${venta.total.toFixed(2)}</td>
+                        <td><span class="badge ${metodoBadge}">${venta.metodoPago}</span></td>
+                        <td>${items}</td>
+                    </tr>
+                `;
+            });
+
+            tablaHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            ventasRecientes.innerHTML = tablaHTML;
+        }
+
+        // Cambiar tab
+        function showTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            if (confirm(`¿Está seguro de que desea eliminar al cliente ${cliente.nombre}?`)) {
-                const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteId}`);
-                window.firebaseRemove(clienteRef);
-                
-                // También eliminar cualquier registro de deuda
-                const deudaRef = window.firebaseRef(window.firebaseDatabase, `deudas/${clienteId}`);
-                window.firebaseRemove(deudaRef);
-                
-                mostrarAlerta('Cliente eliminado exitosamente', 'success');
+            // Remover clase active de todos los botones
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar tab seleccionado
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Si es el tab de créditos, recargar deudas
+            if (tabName === 'creditos') {
+                cargarDeudas();
             }
         }
 
-        // Función para mostrar alertas
-        function mostrarAlerta(mensaje, tipo) {
-            const alerta = document.createElement('div');
-            alerta.className = `alert alert-${tipo === 'success' ? 'success' : 'error'}`;
-            alerta.innerHTML = mensaje;
-            
-            document.body.appendChild(alerta);
-            
-            setTimeout(() => {
-                alerta.remove();
-            }, 3000);
-        }
-
-        // Inicializar fechas en reportes
-        function inicializarFechas() {
-            const hoy = new Date();
-            const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-            
-            document.getElementById('fechaInicio').value = inicioMes.toISOString().split('T')[0];
-            document.getElementById('fechaFin').value = hoy.toISOString().split('T')[0];
-        }
-
-        function forzarRecargaDatos() {
-            console.log('Forzando recarga de datos...');
-            
-            // Recargar clientes
-            const clientesRef = window.firebaseRef(window.firebaseDatabase, 'clientes');
-            window.firebaseGet(clientesRef).then((snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    db.clientes = data;
-                    console.log('Clientes recargados:', db.clientes);
-                    cargarDeudas();
-                }
-            });
-        }
-
-        // Hacer la función disponible globalmente
-        window.initializeApp = initializeApp;
-
-        // Actualizar reportes automáticamente si estamos en esa sección
-        if (document.getElementById('reportes').classList.contains('active')) {
-            generarReportes();
-        }
+        // Búsqueda de clientes
+        document.addEventListener('DOMContentLoaded', function() {
+            const buscarCliente = document.getElementById('buscarCliente');
+            if (buscarCliente) {
+                buscarCliente.addEventListener('input', function() {
+                    const termino = this.value.toLowerCase();
+                    const filas = document.querySelectorAll('#tablaDeudas tbody tr');
+                    
+                    filas.forEach(fila => {
+                        const cliente = fila.querySelector('td:first-child').textContent.toLowerCase();
+                        if (cliente.includes(termino)) {
+                            fila.style.display = '';
+                        } else {
+                            fila.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>
