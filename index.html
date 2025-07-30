@@ -785,7 +785,7 @@
                 
                 // Actualizar reportes si está activa esa sección
                 if (document.getElementById('reportes').classList.contains('active')) {
-                    setTimeout(generarReportes, 100);
+                    setTimeout(generarReportes, 500);
                 }
             });
 
@@ -801,6 +801,11 @@
                 }
                 cargarClientes();
                 cargarDeudas(); // Cargar deudas después de cargar clientes
+                
+                // Actualizar reportes si está activa esa sección
+                if (document.getElementById('reportes').classList.contains('active')) {
+                    setTimeout(generarReportes, 500);
+                }
             });
 
             // Cargar deudas
@@ -826,6 +831,11 @@
                 const data = snapshot.val();
                 db.retiros = data || {};
                 actualizarCaja();
+                
+                // Actualizar reportes si está activa esa sección
+                if (document.getElementById('reportes').classList.contains('active')) {
+                    setTimeout(generarReportes, 500);
+                }
             });
 
             // Cargar pagos de deuda - CORREGIDO: Actualizar caja cuando cambien los pagos
@@ -833,6 +843,13 @@
             window.firebaseOnValue(pagosDeudasRef, (snapshot) => {
                 const data = snapshot.val();
                 db.pagosDeuda = data || {};
+                console.log('Pagos de deuda cargados:', db.pagosDeuda);
+                actualizarCaja(); // Actualizar caja cuando se cargan pagos
+                
+                // Actualizar reportes si está activa esa sección
+                if (document.getElementById('reportes').classList.contains('active')) {
+                    setTimeout(generarReportes, 500);
+                }
                 console.log('Pagos de deuda cargados:', db.pagosDeuda);
                 actualizarCaja(); // CORREGIDO: Actualizar caja al cargar pagos de deuda
             });
@@ -883,6 +900,9 @@
             }
             if (sectionName === 'pedidos') cargarPedidos();
             if (sectionName === 'caja') actualizarCaja();
+            if (sectionName === 'reportes') {
+                setTimeout(generarReportes, 300);
+            }
             if (sectionName === 'clientes') cargarClientes();
         }
 
@@ -1462,6 +1482,13 @@
                 return;
             }
             
+            console.log('Generando reportes para:', fechaInicio, 'a', fechaFin);
+            console.log('Datos disponibles:', {
+                ventas: Object.keys(db.ventas).length,
+                pagosDeuda: Object.keys(db.pagosDeuda).length,
+                retiros: Object.keys(db.retiros).length
+            });
+            
             const inicio = new Date(fechaInicio);
             const fin = new Date(fechaFin);
             fin.setHours(23, 59, 59, 999); // Incluir todo el día final
@@ -1469,12 +1496,20 @@
             // Filtrar datos por fechas
             const ventasFiltradas = Object.values(db.ventas).filter(v => {
                 const fechaVenta = new Date(v.fecha);
-                return fechaVenta >= inicio && fechaVenta <= fin;
+                const enRango = fechaVenta >= inicio && fechaVenta <= fin;
+                if (enRango) {
+                    console.log('Venta incluida:', v.monto, v.metodoPago, v.fechaFormateada);
+                }
+                return enRango;
             });
             
             const pagosFiltrados = Object.values(db.pagosDeuda).filter(p => {
                 const fechaPago = new Date(p.fecha);
-                return fechaPago >= inicio && fechaPago <= fin;
+                const enRango = fechaPago >= inicio && fechaPago <= fin;
+                if (enRango) {
+                    console.log('Pago incluido:', p.monto, p.fechaFormateada);
+                }
+                return enRango;
             });
             
             const retirosFiltrados = Object.values(db.retiros).filter(r => {
@@ -1492,12 +1527,27 @@
             const totalPagos = pagosFiltrados.reduce((sum, p) => sum + p.monto, 0);
             const deudasActivas = Object.values(db.clientes).reduce((sum, c) => sum + (c.deuda || 0), 0);
             
+            // Calcular efectivo total ingresado (ventas en efectivo + pagos de deudas)
+            const efectivoTotalIngresado = efectivo + totalPagos;
+            
             // CORREGIDO: Calcular efectivo total (ventas + pagos de deudas)
             const efectivoTotal = efectivo + totalPagos;
             
             // Calcular cierres
             const cierres = retirosFiltrados.filter(r => r.tipo === 'cierre').reduce((sum, r) => sum + r.monto, 0);
             const retiros = retirosFiltrados.filter(r => r.tipo === 'retiro').reduce((sum, r) => sum + r.monto, 0);
+            
+            console.log('Resultados calculados:', {
+                totalVentas,
+                efectivo,
+                tarjeta,
+                credito,
+                totalPagos,
+                efectivoTotalIngresado,
+                deudasActivas,
+                cierres,
+                retiros
+            });
             
             // Mostrar resultados
             document.getElementById('reporteTotalVentas').textContent = `$${totalVentas.toFixed(2)}`;
@@ -1510,7 +1560,7 @@
             
             // CORREGIDO: Mostrar efectivo total ingresado
             document.getElementById('reporteEfectivoTotal').textContent = `$${efectivoTotal.toFixed(2)}`;
-            document.getElementById('reporteCierres').textContent = `$${cierres.toFixed(2)}`;
+            document.getElementById('reporteCierres').textContent = `$${efectivoTotalIngresado.toFixed(2)}`;
             document.getElementById('reporteRetiros').textContent = `$${retiros.toFixed(2)}`;
             
             mostrarAlerta(`Reportes generados para el período ${fechaInicio} - ${fechaFin}`, 'success');
@@ -1670,8 +1720,10 @@
 
         // Generar reportes automáticamente al cargar
         setTimeout(() => {
-            generarReportes();
-        }, 2000);
+            if (document.getElementById('reportes').classList.contains('active')) {
+                generarReportes();
+            }
+        }, 3000);
     </script>
 </body>
 </html>
