@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema POS - Punto de Venta</title>
+    <title>Sistema POS Mejorado con Pagos y Reportes Corregidos</title>
     <style>
         * {
             margin: 0;
@@ -169,6 +169,31 @@
         .payment-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .payment-options-modal {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .payment-btn-modal {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .payment-btn-modal.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+            color: #667eea;
         }
 
         .data-table {
@@ -339,12 +364,30 @@
             color: #667eea;
         }
 
+        .metodoPago-efectivo {
+            background: #e8f5e8;
+            color: #155724;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .metodoPago-transferencia {
+            background: #e3f2fd;
+            color: #0d47a1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .nav-buttons {
                 flex-direction: column;
             }
             
-            .payment-options {
+            .payment-options, .payment-options-modal {
                 flex-direction: column;
             }
             
@@ -441,7 +484,7 @@
             <input type="text" class="search-box" placeholder="🔍 Buscar cliente..." onkeyup="filtrarDeudas(this.value)">
             
             <button class="btn btn-warning" onclick="forzarRecargaDatos()" style="margin-bottom: 20px;">
-                🔄 Recargar Datos (Debug)
+                🔄 Recargar Datos
             </button>
             
             <div class="total-box">
@@ -456,6 +499,19 @@
                         <th>Deuda Total</th>
                         <th>Última Venta</th>
                         <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <h3 style="margin-top: 30px;">💰 Historial de Pagos Recibidos</h3>
+            <table class="data-table" id="tablaPagosRecibidos">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Monto</th>
+                        <th>Método de Pago</th>
+                        <th>Fecha</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -536,7 +592,8 @@
                     <h3>📊 Resumen de Caja</h3>
                     <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; margin: 15px 0;">
                         <p><strong>Ventas en Efectivo Hoy:</strong> <span id="ventasEfectivoHoy">$0.00</span></p>
-                        <p><strong>Pagos de Deudas Hoy:</strong> <span id="pagosDeudasHoy">$0.00</span></p>
+                        <p><strong>Pagos de Deudas en Efectivo:</strong> <span id="pagosDeudasEfectivoHoy">$0.00</span></p>
+                        <p><strong>Pagos de Deudas por Transferencia:</strong> <span id="pagosDeudasTransferenciaHoy">$0.00</span></p>
                         <p><strong>Retiros Realizados:</strong> <span id="retirosHoy">$0.00</span></p>
                         <p><strong>Saldo Actual:</strong> <span id="saldoActual">$0.00</span></p>
                     </div>
@@ -601,9 +658,11 @@
                         <h3>Deudas Activas</h3>
                         <div class="amount" id="reporteDeudas">$0.00</div>
                     </div>
-                    <p style="text-align: center; margin-top: 10px;">
-                        <strong>Pagos Recibidos:</strong> <span id="reportePagos">$0.00</span>
-                    </p>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <p><strong>Pagos Recibidos (Efectivo):</strong> <span id="reportePagosEfectivo">$0.00</span></p>
+                        <p><strong>Pagos Recibidos (Transferencia):</strong> <span id="reportePagosTransferencia">$0.00</span></p>
+                        <p><strong>Total Pagos Recibidos:</strong> <span id="reportePagosTotal">$0.00</span></p>
+                    </div>
                 </div>
                 
                 <div class="card">
@@ -667,6 +726,19 @@
                 <label>Monto del Pago:</label>
                 <input type="number" id="montoPago" placeholder="0.00" step="0.01" min="0">
             </div>
+            
+            <div class="form-group">
+                <label>Método de Pago:</label>
+                <div class="payment-options-modal">
+                    <div class="payment-btn-modal selected" onclick="selectPaymentModal('efectivo')" id="pagoEfectivo">
+                        💵 Efectivo
+                    </div>
+                    <div class="payment-btn-modal" onclick="selectPaymentModal('transferencia')" id="pagoTransferencia">
+                        🏦 Transferencia
+                    </div>
+                </div>
+            </div>
+            
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn btn-success" onclick="registrarPago()">💰 Registrar Pago</button>
                 <button class="btn" onclick="cerrarModalDeuda()">❌ Cancelar</button>
@@ -689,7 +761,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, push, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Firebase configuration - CORREGIDA
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDsoDE6Ej34PEBAMqIYTjZ4zifRs-PCmAI",
             authDomain: "sistema-de-venta-dbef2.firebaseapp.com",
@@ -715,13 +787,14 @@
         window.firebaseRemove = remove;
         window.firebaseOnValue = onValue;
 
-        console.log('Firebase inicializado correctamente con la configuración correcta');
+        console.log('Firebase inicializado correctamente');
         window.initializeApp();
     </script>
 
     <script>
         // Variables globales
         let metodoPagoSeleccionado = 'efectivo';
+        let metodoPagoDeudaSeleccionado = 'efectivo';
         let clienteDeudaActual = null;
         let pedidoActual = null;
 
@@ -742,16 +815,6 @@
             setupEventListeners();
             loadDataFromFirebase();
             inicializarFechas();
-            
-            // Inicializar estado del botón de crédito
-            setTimeout(() => {
-                const creditoBtn = document.querySelector('.payment-btn[onclick="selectPayment(\'credito\')"]');
-                if (creditoBtn) {
-                    creditoBtn.style.opacity = '0.5';
-                    creditoBtn.style.pointerEvents = 'none';
-                    creditoBtn.innerHTML = '🚫<br><strong>Crédito</strong><br><small>(Solo clientes registrados)</small>';
-                }
-            }, 1000);
         }
 
         // Configurar event listeners
@@ -770,7 +833,7 @@
             }
         }
 
-        // Cargar datos desde Firebase - CORREGIDO
+        // Cargar datos desde Firebase
         function loadDataFromFirebase() {
             console.log('Cargando datos desde Firebase...');
             
@@ -779,30 +842,28 @@
             window.firebaseOnValue(ventasRef, (snapshot) => {
                 const data = snapshot.val();
                 db.ventas = data || {};
-                console.log('Ventas cargadas:', db.ventas);
+                console.log('Ventas cargadas:', Object.keys(db.ventas).length);
                 actualizarResumenVentas();
-                actualizarCaja(); // CORREGIDO: Actualizar caja cuando cambien las ventas
+                actualizarCaja();
                 
-                // Actualizar reportes si está activa esa sección
                 if (document.getElementById('reportes').classList.contains('active')) {
                     setTimeout(generarReportes, 500);
                 }
             });
 
-            // Cargar clientes - CORREGIDO para usar la estructura correcta
+            // Cargar clientes
             const clientesRef = window.firebaseRef(window.firebaseDatabase, 'clientes');
             window.firebaseOnValue(clientesRef, (snapshot) => {
                 const data = snapshot.val();
-                console.log('Datos de clientes desde Firebase:', data);
                 if (data) {
                     db.clientes = data;
                 } else {
                     initializeDefaultClients();
                 }
+                console.log('Clientes cargados:', Object.keys(db.clientes).length);
                 cargarClientes();
-                cargarDeudas(); // Cargar deudas después de cargar clientes
+                cargarDeudas();
                 
-                // Actualizar reportes si está activa esa sección
                 if (document.getElementById('reportes').classList.contains('active')) {
                     setTimeout(generarReportes, 500);
                 }
@@ -821,7 +882,6 @@
             window.firebaseOnValue(pedidosRef, (snapshot) => {
                 const data = snapshot.val();
                 db.pedidos = data || {};
-                console.log('Pedidos cargados:', db.pedidos);
                 cargarPedidos();
             });
 
@@ -832,26 +892,23 @@
                 db.retiros = data || {};
                 actualizarCaja();
                 
-                // Actualizar reportes si está activa esa sección
                 if (document.getElementById('reportes').classList.contains('active')) {
                     setTimeout(generarReportes, 500);
                 }
             });
 
-            // Cargar pagos de deuda - CORREGIDO: Actualizar caja cuando cambien los pagos
+            // Cargar pagos de deuda
             const pagosDeudasRef = window.firebaseRef(window.firebaseDatabase, 'pagosDeuda');
             window.firebaseOnValue(pagosDeudasRef, (snapshot) => {
                 const data = snapshot.val();
                 db.pagosDeuda = data || {};
-                console.log('Pagos de deuda cargados:', db.pagosDeuda);
-                actualizarCaja(); // Actualizar caja cuando se cargan pagos
+                console.log('Pagos de deuda cargados:', Object.keys(db.pagosDeuda).length);
+                actualizarCaja();
+                cargarHistorialPagos();
                 
-                // Actualizar reportes si está activa esa sección
                 if (document.getElementById('reportes').classList.contains('active')) {
                     setTimeout(generarReportes, 500);
                 }
-                console.log('Pagos de deuda cargados:', db.pagosDeuda);
-                actualizarCaja(); // CORREGIDO: Actualizar caja al cargar pagos de deuda
             });
 
             // Cargar pagos de pedidos
@@ -895,8 +952,8 @@
             // Actualizar datos cuando se cambia de sección
             if (sectionName === 'ventas') actualizarResumenVentas();
             if (sectionName === 'creditos') {
-                forzarRecargaDatos();
                 cargarDeudas();
+                cargarHistorialPagos();
             }
             if (sectionName === 'pedidos') cargarPedidos();
             if (sectionName === 'caja') actualizarCaja();
@@ -914,7 +971,15 @@
             metodoPagoSeleccionado = metodo;
         }
 
-        // Funciones de ventas - CORREGIDAS
+        function selectPaymentModal(metodo) {
+            document.querySelectorAll('.payment-btn-modal').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            metodoPagoDeudaSeleccionado = metodo;
+        }
+
+        // Funciones de ventas
         function procesarVenta() {
             const clienteId = document.getElementById('clienteVenta').value;
             const monto = parseFloat(document.getElementById('montoVenta').value);
@@ -941,8 +1006,6 @@
                 fechaFormateada: new Date().toLocaleDateString('es-ES')
             };
 
-            console.log('Procesando venta:', venta);
-
             // Guardar venta en Firebase
             const ventasRef = window.firebaseRef(window.firebaseDatabase, `ventas/${venta.id}`);
             window.firebaseSet(ventasRef, venta);
@@ -957,8 +1020,6 @@
                         const nuevaDeuda = deudaActual + monto;
                         const totalComprasActual = cliente.totalCompras || 0;
                         
-                        console.log(`Actualizando cliente ${cliente.nombre}: deuda ${deudaActual} + ${monto} = ${nuevaDeuda}`);
-                        
                         const updatedCliente = {
                             ...cliente,
                             deuda: nuevaDeuda,
@@ -966,13 +1027,7 @@
                             ultimaCompra: new Date().toLocaleDateString('es-ES')
                         };
 
-                        window.firebaseSet(clienteRef, updatedCliente).then(() => {
-                            console.log('Cliente actualizado exitosamente');
-                            // Forzar recarga de deudas después de actualizar
-                            setTimeout(() => {
-                                cargarDeudas();
-                            }, 500);
-                        });
+                        window.firebaseSet(clienteRef, updatedCliente);
                     }
                 });
             }
@@ -988,7 +1043,7 @@
         }
 
         function actualizarResumenVentas() {
-            cargarClientes(); // Actualizar select de clientes
+            cargarClientes();
             
             const hoy = new Date().toLocaleDateString('es-ES');
             const ventasHoy = Object.values(db.ventas).filter(v => v.fechaFormateada === hoy);
@@ -1004,27 +1059,20 @@
             document.getElementById('creditoHoy').textContent = `$${creditoHoy.toFixed(2)}`;
         }
 
-        // Funciones de créditos y deudas - CORREGIDAS
+        // Funciones de créditos y deudas
         function cargarDeudas() {
-            console.log('Cargando deudas...');
-            console.log('Clientes disponibles:', db.clientes);
-            
             const tbody = document.querySelector('#tablaDeudas tbody');
             tbody.innerHTML = '';
             
             let totalDeudas = 0;
             let clientesConDeuda = 0;
             
-            // Buscar todos los clientes con deuda > 0
             Object.values(db.clientes).forEach(cliente => {
                 const deuda = cliente.deuda || 0;
-                console.log(`Cliente: ${cliente.nombre}, Deuda: ${deuda}`);
                 
                 if (deuda > 0) {
                     totalDeudas += deuda;
                     clientesConDeuda++;
-                    
-                    console.log('Cliente con deuda encontrado:', cliente.nombre, deuda);
                     
                     const row = tbody.insertRow();
                     row.innerHTML = `
@@ -1039,9 +1087,6 @@
                 }
             });
             
-            console.log('Total deudas:', totalDeudas);
-            console.log('Clientes con deuda:', clientesConDeuda);
-            
             document.getElementById('totalDeudas').textContent = `$${totalDeudas.toFixed(2)}`;
             
             if (clientesConDeuda === 0) {
@@ -1052,6 +1097,39 @@
                     </td>
                 `;
             }
+        }
+
+        function cargarHistorialPagos() {
+            const tbody = document.querySelector('#tablaPagosRecibidos tbody');
+            tbody.innerHTML = '';
+            
+            // Obtener pagos ordenados por fecha (más recientes primero)
+            const pagosOrdenados = Object.values(db.pagosDeuda)
+                .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            if (pagosOrdenados.length === 0) {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td colspan="4" style="text-align: center; color: #666; padding: 20px;">
+                        No hay pagos registrados
+                    </td>
+                `;
+                return;
+            }
+            
+            pagosOrdenados.forEach(pago => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${pago.clienteNombre}</td>
+                    <td>$${pago.monto.toFixed(2)}</td>
+                    <td>
+                        <span class="metodoPago-${pago.metodoPago}">
+                            ${pago.metodoPago === 'efectivo' ? '💵 Efectivo' : '🏦 Transferencia'}
+                        </span>
+                    </td>
+                    <td>${pago.fechaFormateada}</td>
+                `;
+            });
         }
 
         function filtrarDeudas(busqueda) {
@@ -1072,6 +1150,12 @@
             clienteDeudaActual = clienteId;
             const cliente = db.clientes[clienteId];
             document.getElementById('tituloModalDeuda').textContent = `Gestionar Deuda - ${cliente.nombre}`;
+            
+            // Resetear selección de método de pago
+            metodoPagoDeudaSeleccionado = 'efectivo';
+            document.getElementById('pagoEfectivo').classList.add('selected');
+            document.getElementById('pagoTransferencia').classList.remove('selected');
+            
             document.getElementById('modalDeuda').style.display = 'block';
         }
 
@@ -1096,13 +1180,14 @@
                 return;
             }
             
-            // Registrar pago
+            // Registrar pago con método de pago
             const pagoId = Date.now().toString();
             const pago = {
                 id: pagoId,
                 clienteId: clienteDeudaActual,
                 clienteNombre: cliente.nombre,
                 monto: monto,
+                metodoPago: metodoPagoDeudaSeleccionado,
                 fecha: new Date().toISOString(),
                 fechaFormateada: new Date().toLocaleDateString('es-ES')
             };
@@ -1113,21 +1198,17 @@
             // Reducir deuda
             const nuevaDeuda = cliente.deuda - monto;
             const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteDeudaActual}/deuda`);
-            window.firebaseSet(clienteRef, nuevaDeuda).then(() => {
-                console.log(`Pago registrado: $${monto} para cliente ${cliente.nombre}`);
-                // Actualizar caja inmediatamente después de registrar el pago
-                setTimeout(() => {
-                    actualizarCaja();
-                }, 500);
-            });
+            window.firebaseSet(clienteRef, nuevaDeuda);
             
-            mostrarAlerta('Pago registrado exitosamente', 'success');
+            mostrarAlerta(`Pago de $${monto.toFixed(2)} registrado exitosamente (${metodoPagoDeudaSeleccionado})`, 'success');
             cerrarModalDeuda();
         }
 
         function verHistorialDeuda() {
             const cliente = db.clientes[clienteDeudaActual];
-            const pagos = Object.values(db.pagosDeuda).filter(p => p.clienteId === clienteDeudaActual);
+            const pagos = Object.values(db.pagosDeuda)
+                .filter(p => p.clienteId === clienteDeudaActual)
+                .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
             
             let historial = `<h4>Historial de ${cliente.nombre}</h4>`;
             historial += `<p><strong>Deuda Actual:</strong> $${cliente.deuda.toFixed(2)}</p>`;
@@ -1141,6 +1222,7 @@
                         <tr style="background: #f8f9fa;">
                             <th style="padding: 8px; border: 1px solid #ddd;">Fecha</th>
                             <th style="padding: 8px; border: 1px solid #ddd;">Monto</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">Método</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -1150,13 +1232,16 @@
                         <tr>
                             <td style="padding: 8px; border: 1px solid #ddd;">${pago.fechaFormateada}</td>
                             <td style="padding: 8px; border: 1px solid #ddd;">$${pago.monto.toFixed(2)}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                ${pago.metodoPago === 'efectivo' ? '💵 Efectivo' : '🏦 Transferencia'}
+                            </td>
                         </tr>`;
                 });
                 
                 historial += `</tbody></table>`;
             }
             
-            historial += `<button class="btn" onclick="cerrarModalDeuda()" style="margin-top: 15px;">Cerrar</button>`;
+            historial += `<button class="btn" onclick="cerrarModalPedido()" style="margin-top: 15px;">Cerrar</button>`;
             
             document.getElementById('contenidoModalPedido').innerHTML = historial;
             document.getElementById('modalPedido').style.display = 'block';
@@ -1165,7 +1250,6 @@
         function eliminarDeuda(clienteId) {
             const cliente = db.clientes[clienteId];
             if (confirm(`¿Está seguro de que desea eliminar la deuda de ${cliente.nombre}?`)) {
-                // Resetear deuda del cliente
                 const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteId}/deuda`);
                 window.firebaseSet(clienteRef, 0);
                 
@@ -1173,7 +1257,7 @@
             }
         }
 
-        // Funciones de pedidos - CORREGIDAS
+        // Funciones de pedidos
         function crearPedido() {
             const proveedor = document.getElementById('nombreProveedor').value.trim();
             const nota = document.getElementById('notaPedido').value.trim();
@@ -1350,7 +1434,7 @@
             pedidoActual = null;
         }
 
-        // Funciones de caja - CORREGIDAS PARA INCLUIR PAGOS DE DEUDAS
+        // Funciones de caja - CORREGIDAS
         function actualizarCaja() {
             const hoy = new Date().toLocaleDateString('es-ES');
             
@@ -1359,9 +1443,13 @@
                 .filter(v => v.fechaFormateada === hoy && v.metodoPago === 'efectivo')
                 .reduce((sum, v) => sum + v.monto, 0);
             
-            // CORREGIDO: Calcular pagos de deudas del día (todos los pagos de deudas son en efectivo)
-            const pagosDeudasHoy = Object.values(db.pagosDeuda)
-                .filter(p => p.fechaFormateada === hoy)
+            // Calcular pagos de deudas por método de pago del día
+            const pagosDeudasEfectivoHoy = Object.values(db.pagosDeuda)
+                .filter(p => p.fechaFormateada === hoy && p.metodoPago === 'efectivo')
+                .reduce((sum, p) => sum + p.monto, 0);
+                
+            const pagosDeudasTransferenciaHoy = Object.values(db.pagosDeuda)
+                .filter(p => p.fechaFormateada === hoy && p.metodoPago === 'transferencia')
                 .reduce((sum, p) => sum + p.monto, 0);
             
             // Calcular retiros del día
@@ -1369,14 +1457,13 @@
                 .filter(r => r.fechaFormateada === hoy)
                 .reduce((sum, r) => sum + r.monto, 0);
             
-            // CORREGIDO: El dinero disponible incluye ventas en efectivo + pagos de deudas - retiros
-            const dineroDisponible = ventasEfectivoHoy + pagosDeudasHoy - retirosHoy;
-            
-            console.log(`Actualizando caja - Ventas efectivo: $${ventasEfectivoHoy}, Pagos deudas: $${pagosDeudasHoy}, Retiros: $${retirosHoy}, Disponible: $${dineroDisponible}`);
+            // El dinero disponible en caja es solo efectivo (ventas + pagos en efectivo - retiros)
+            const dineroDisponible = ventasEfectivoHoy + pagosDeudasEfectivoHoy - retirosHoy;
             
             document.getElementById('dineroDisponible').textContent = `$${dineroDisponible.toFixed(2)}`;
             document.getElementById('ventasEfectivoHoy').textContent = `$${ventasEfectivoHoy.toFixed(2)}`;
-            document.getElementById('pagosDeudasHoy').textContent = `$${pagosDeudasHoy.toFixed(2)}`;
+            document.getElementById('pagosDeudasEfectivoHoy').textContent = `$${pagosDeudasEfectivoHoy.toFixed(2)}`;
+            document.getElementById('pagosDeudasTransferenciaHoy').textContent = `$${pagosDeudasTransferenciaHoy.toFixed(2)}`;
             document.getElementById('retirosHoy').textContent = `$${retirosHoy.toFixed(2)}`;
             document.getElementById('saldoActual').textContent = `$${dineroDisponible.toFixed(2)}`;
             
@@ -1467,7 +1554,7 @@
             });
         }
 
-        // Funciones de reportes - CORREGIDAS PARA INCLUIR PAGOS DE DEUDAS
+        // Funciones de reportes - CORREGIDAS
         function generarReportes() {
             const fechaInicio = document.getElementById('fechaInicio').value;
             const fechaFin = document.getElementById('fechaFin').value;
@@ -1483,33 +1570,20 @@
             }
             
             console.log('Generando reportes para:', fechaInicio, 'a', fechaFin);
-            console.log('Datos disponibles:', {
-                ventas: Object.keys(db.ventas).length,
-                pagosDeuda: Object.keys(db.pagosDeuda).length,
-                retiros: Object.keys(db.retiros).length
-            });
             
             const inicio = new Date(fechaInicio);
             const fin = new Date(fechaFin);
-            fin.setHours(23, 59, 59, 999); // Incluir todo el día final
+            fin.setHours(23, 59, 59, 999);
             
             // Filtrar datos por fechas
             const ventasFiltradas = Object.values(db.ventas).filter(v => {
                 const fechaVenta = new Date(v.fecha);
-                const enRango = fechaVenta >= inicio && fechaVenta <= fin;
-                if (enRango) {
-                    console.log('Venta incluida:', v.monto, v.metodoPago, v.fechaFormateada);
-                }
-                return enRango;
+                return fechaVenta >= inicio && fechaVenta <= fin;
             });
             
             const pagosFiltrados = Object.values(db.pagosDeuda).filter(p => {
                 const fechaPago = new Date(p.fecha);
-                const enRango = fechaPago >= inicio && fechaPago <= fin;
-                if (enRango) {
-                    console.log('Pago incluido:', p.monto, p.fechaFormateada);
-                }
-                return enRango;
+                return fechaPago >= inicio && fechaPago <= fin;
             });
             
             const retirosFiltrados = Object.values(db.retiros).filter(r => {
@@ -1519,48 +1593,38 @@
             
             // Calcular totales de ventas
             const totalVentas = ventasFiltradas.reduce((sum, v) => sum + v.monto, 0);
-            const efectivo = ventasFiltradas.filter(v => v.metodoPago === 'efectivo').reduce((sum, v) => sum + v.monto, 0);
+            const efectivoVentas = ventasFiltradas.filter(v => v.metodoPago === 'efectivo').reduce((sum, v) => sum + v.monto, 0);
             const tarjeta = ventasFiltradas.filter(v => v.metodoPago === 'tarjeta').reduce((sum, v) => sum + v.monto, 0);
             const credito = ventasFiltradas.filter(v => v.metodoPago === 'credito').reduce((sum, v) => sum + v.monto, 0);
             
-            // Calcular deudas y pagos
-            const totalPagos = pagosFiltrados.reduce((sum, p) => sum + p.monto, 0);
+            // Calcular pagos de deudas por método
+            const pagosEfectivo = pagosFiltrados.filter(p => p.metodoPago === 'efectivo').reduce((sum, p) => sum + p.monto, 0);
+            const pagosTransferencia = pagosFiltrados.filter(p => p.metodoPago === 'transferencia').reduce((sum, p) => sum + p.monto, 0);
+            const totalPagos = pagosEfectivo + pagosTransferencia;
+            
+            // Calcular deudas activas
             const deudasActivas = Object.values(db.clientes).reduce((sum, c) => sum + (c.deuda || 0), 0);
             
-            // Calcular efectivo total ingresado (ventas en efectivo + pagos de deudas)
-            const efectivoTotalIngresado = efectivo + totalPagos;
+            // Calcular efectivo total ingresado (ventas en efectivo + pagos en efectivo)
+            const efectivoTotal = efectivoVentas + pagosEfectivo;
             
-            // CORREGIDO: Calcular efectivo total (ventas + pagos de deudas)
-            const efectivoTotal = efectivo + totalPagos;
-            
-            // Calcular cierres
+            // Calcular cierres y retiros
             const cierres = retirosFiltrados.filter(r => r.tipo === 'cierre').reduce((sum, r) => sum + r.monto, 0);
             const retiros = retirosFiltrados.filter(r => r.tipo === 'retiro').reduce((sum, r) => sum + r.monto, 0);
             
-            console.log('Resultados calculados:', {
-                totalVentas,
-                efectivo,
-                tarjeta,
-                credito,
-                totalPagos,
-                efectivoTotalIngresado,
-                deudasActivas,
-                cierres,
-                retiros
-            });
-            
             // Mostrar resultados
             document.getElementById('reporteTotalVentas').textContent = `$${totalVentas.toFixed(2)}`;
-            document.getElementById('reporteEfectivo').textContent = `$${efectivo.toFixed(2)}`;
+            document.getElementById('reporteEfectivo').textContent = `$${efectivoVentas.toFixed(2)}`;
             document.getElementById('reporteTarjeta').textContent = `$${tarjeta.toFixed(2)}`;
             document.getElementById('reporteCredito').textContent = `$${credito.toFixed(2)}`;
             
             document.getElementById('reporteDeudas').textContent = `$${deudasActivas.toFixed(2)}`;
-            document.getElementById('reportePagos').textContent = `$${totalPagos.toFixed(2)}`;
+            document.getElementById('reportePagosEfectivo').textContent = `$${pagosEfectivo.toFixed(2)}`;
+            document.getElementById('reportePagosTransferencia').textContent = `$${pagosTransferencia.toFixed(2)}`;
+            document.getElementById('reportePagosTotal').textContent = `$${totalPagos.toFixed(2)}`;
             
-            // CORREGIDO: Mostrar efectivo total ingresado
             document.getElementById('reporteEfectivoTotal').textContent = `$${efectivoTotal.toFixed(2)}`;
-            document.getElementById('reporteCierres').textContent = `$${efectivoTotalIngresado.toFixed(2)}`;
+            document.getElementById('reporteCierres').textContent = `$${cierres.toFixed(2)}`;
             document.getElementById('reporteRetiros').textContent = `$${retiros.toFixed(2)}`;
             
             mostrarAlerta(`Reportes generados para el período ${fechaInicio} - ${fechaFin}`, 'success');
@@ -1616,26 +1680,23 @@
                 }
             });
 
-            // Agregar event listener para controlar métodos de pago
+            // Controlar métodos de pago según cliente
             selectVentas.addEventListener('change', function() {
                 const creditoBtn = document.querySelector('.payment-btn[onclick="selectPayment(\'credito\')"]');
                 if (this.value === 'general') {
-                    // Deshabilitar crédito para cliente general
                     creditoBtn.style.opacity = '0.5';
                     creditoBtn.style.pointerEvents = 'none';
-                    creditoBtn.innerHTML = '🚫<br><strong>Crédito</strong><br><small>(Solo clientes registrados)</small>';
+                    creditoBtn.innerHTML = '🚫 Crédito<br><small>(Solo clientes registrados)</small>';
                     
-                    // Si estaba seleccionado crédito, cambiar a efectivo
                     if (metodoPagoSeleccionado === 'credito') {
                         selectPayment('efectivo');
                         document.querySelectorAll('.payment-btn')[0].classList.add('selected');
                         creditoBtn.classList.remove('selected');
                     }
                 } else {
-                    // Habilitar crédito para clientes registrados
                     creditoBtn.style.opacity = '1';
                     creditoBtn.style.pointerEvents = 'auto';
-                    creditoBtn.innerHTML = '📝<br><strong>Crédito</strong>';
+                    creditoBtn.innerHTML = '📋 Crédito';
                 }
             });
             
@@ -1683,6 +1744,11 @@
             const alerta = document.createElement('div');
             alerta.className = `alert alert-${tipo === 'success' ? 'success' : 'error'}`;
             alerta.innerHTML = mensaje;
+            alerta.style.position = 'fixed';
+            alerta.style.top = '20px';
+            alerta.style.right = '20px';
+            alerta.style.zIndex = '9999';
+            alerta.style.maxWidth = '400px';
             
             document.body.appendChild(alerta);
             
@@ -1702,28 +1768,12 @@
 
         function forzarRecargaDatos() {
             console.log('Forzando recarga de datos...');
-            
-            // Recargar clientes
-            const clientesRef = window.firebaseRef(window.firebaseDatabase, 'clientes');
-            window.firebaseGet(clientesRef).then((snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    db.clientes = data;
-                    console.log('Clientes recargados:', db.clientes);
-                    cargarDeudas();
-                }
-            });
+            loadDataFromFirebase();
+            mostrarAlerta('Datos recargados exitosamente', 'success');
         }
 
         // Hacer la función disponible globalmente
         window.initializeApp = initializeApp;
-
-        // Generar reportes automáticamente al cargar
-        setTimeout(() => {
-            if (document.getElementById('reportes').classList.contains('active')) {
-                generarReportes();
-            }
-        }, 3000);
     </script>
 </body>
 </html>
