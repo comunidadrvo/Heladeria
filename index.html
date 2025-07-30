@@ -672,8 +672,18 @@
                         <div class="amount" id="reporteEfectivoTotal">$0.00</div>
                     </div>
                     <p style="text-align: center; margin-top: 10px;">
-                        <strong>Cierres de Caja:</strong> <span id="reporteCierres">$0.00</span><br>
-                        <strong>Retiros Totales:</strong> <span id="reporteRetiros">$0.00</span>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <div style="flex: 1; text-align: center; padding: 10px; background: #e8f5e8; border-radius: 8px;">
+                            <strong>Pagos (Efectivo)</strong><br>
+                            <span id="pagosEfectivo">$0.00</span>
+                        </div>
+                        <div style="flex: 1; text-align: center; padding: 10px; background: #e8f4fd; border-radius: 8px;">
+                            <strong>Pagos (Transferencia)</strong><br>
+                            <span id="pagosTransferencia">$0.00</span>
+                        </div>
+                    </div>
+                    <p style="text-align: center; margin-top: 10px;">
+                        <strong>Total Pagos Recibidos:</strong> <span id="totalPagosRecibidos">$0.00</span>
                     </p>
                 </div>
             </div>
@@ -1575,20 +1585,88 @@
             const fin = new Date(fechaFin);
             fin.setHours(23, 59, 59, 999);
             
-            // Filtrar datos por fechas
+            const fechaInicioStr = fechaInicio;
+            const fechaFinStr = fechaFin;
+            
             const ventasFiltradas = Object.values(db.ventas).filter(v => {
-                const fechaVenta = new Date(v.fecha);
-                return fechaVenta >= inicio && fechaVenta <= fin;
+                if (!v.fecha) return false;
+                
+                // Convertir fecha de venta a formato YYYY-MM-DD
+                let fechaVentaStr;
+                if (v.fecha.includes('T')) {
+                    // Formato ISO: 2025-07-30T16:27:42.652Z
+                    fechaVentaStr = v.fecha.split('T')[0];
+                } else if (v.fechaFormateada) {
+                    // Formato DD/MM/YYYY: 30/7/2025
+                    const partes = v.fechaFormateada.split('/');
+                    if (partes.length === 3) {
+                        const dia = partes[0].padStart(2, '0');
+                        const mes = partes[1].padStart(2, '0');
+                        const año = partes[2];
+                        fechaVentaStr = `${año}-${mes}-${dia}`;
+                    }
+                } else {
+                    return false;
+                }
+                
+                const enRango = fechaVentaStr >= fechaInicioStr && fechaVentaStr <= fechaFinStr;
+                if (enRango) {
+                    console.log('Venta incluida:', v.monto, v.metodoPago, fechaVentaStr);
+                }
+                return enRango;
             });
             
+            console.log('Rango de fechas:', fechaInicioStr, 'a', fechaFinStr);
+            console.log('Ventas filtradas:', ventasFiltradas.length);
+            
             const pagosFiltrados = Object.values(db.pagosDeuda).filter(p => {
-                const fechaPago = new Date(p.fecha);
-                return fechaPago >= inicio && fechaPago <= fin;
+                if (!p.fecha) return false;
+                
+                // Convertir fecha de pago a formato YYYY-MM-DD
+                let fechaPagoStr;
+                if (p.fecha.includes('T')) {
+                    // Formato ISO: 2025-07-30T16:27:42.652Z
+                    fechaPagoStr = p.fecha.split('T')[0];
+                } else if (p.fechaFormateada) {
+                    // Formato DD/MM/YYYY: 30/7/2025
+                    const partes = p.fechaFormateada.split('/');
+                    if (partes.length === 3) {
+                        const dia = partes[0].padStart(2, '0');
+                        const mes = partes[1].padStart(2, '0');
+                        const año = partes[2];
+                        fechaPagoStr = `${año}-${mes}-${dia}`;
+                    }
+                } else {
+                    return false;
+                }
+                
+                const enRango = fechaPagoStr >= fechaInicioStr && fechaPagoStr <= fechaFinStr;
+                if (enRango) {
+                    console.log('Pago incluido:', p.monto, fechaPagoStr, p.metodoPago || 'efectivo');
+                }
+                return enRango;
             });
             
             const retirosFiltrados = Object.values(db.retiros).filter(r => {
-                const fechaRetiro = new Date(r.fecha);
-                return fechaRetiro >= inicio && fechaRetiro <= fin;
+                if (!r.fecha) return false;
+                
+                // Convertir fecha de retiro a formato YYYY-MM-DD
+                let fechaRetiroStr;
+                if (r.fecha.includes('T')) {
+                    fechaRetiroStr = r.fecha.split('T')[0];
+                } else if (r.fechaFormateada) {
+                    const partes = r.fechaFormateada.split('/');
+                    if (partes.length === 3) {
+                        const dia = partes[0].padStart(2, '0');
+                        const mes = partes[1].padStart(2, '0');
+                        const año = partes[2];
+                        fechaRetiroStr = `${año}-${mes}-${dia}`;
+                    }
+                } else {
+                    return false;
+                }
+                
+                return fechaRetiroStr >= fechaInicioStr && fechaRetiroStr <= fechaFinStr;
             });
             
             // Calcular totales de ventas
@@ -1597,20 +1675,16 @@
             const tarjeta = ventasFiltradas.filter(v => v.metodoPago === 'tarjeta').reduce((sum, v) => sum + v.monto, 0);
             const credito = ventasFiltradas.filter(v => v.metodoPago === 'credito').reduce((sum, v) => sum + v.monto, 0);
             
-            // Calcular pagos de deudas por método
-            const pagosEfectivo = pagosFiltrados.filter(p => p.metodoPago === 'efectivo').reduce((sum, p) => sum + p.monto, 0);
+            // Calcular pagos por método
+            const pagosEfectivo = pagosFiltrados.filter(p => !p.metodoPago || p.metodoPago === 'efectivo').reduce((sum, p) => sum + p.monto, 0);
             const pagosTransferencia = pagosFiltrados.filter(p => p.metodoPago === 'transferencia').reduce((sum, p) => sum + p.monto, 0);
             const totalPagos = pagosEfectivo + pagosTransferencia;
             
-            // Calcular deudas activas
+            // Calcular deudas activas (suma de todas las deudas actuales de clientes)
             const deudasActivas = Object.values(db.clientes).reduce((sum, c) => sum + (c.deuda || 0), 0);
             
             // Calcular efectivo total ingresado (ventas en efectivo + pagos en efectivo)
-            const efectivoTotal = efectivoVentas + pagosEfectivo;
-            
-            // Calcular cierres y retiros
-            const cierres = retirosFiltrados.filter(r => r.tipo === 'cierre').reduce((sum, r) => sum + r.monto, 0);
-            const retiros = retirosFiltrados.filter(r => r.tipo === 'retiro').reduce((sum, r) => sum + r.monto, 0);
+            const efectivoTotalIngresado = efectivoVentas + pagosEfectivo;
             
             // Mostrar resultados
             document.getElementById('reporteTotalVentas').textContent = `$${totalVentas.toFixed(2)}`;
@@ -1621,11 +1695,13 @@
             document.getElementById('reporteDeudas').textContent = `$${deudasActivas.toFixed(2)}`;
             document.getElementById('reportePagosEfectivo').textContent = `$${pagosEfectivo.toFixed(2)}`;
             document.getElementById('reportePagosTransferencia').textContent = `$${pagosTransferencia.toFixed(2)}`;
-            document.getElementById('reportePagosTotal').textContent = `$${totalPagos.toFixed(2)}`;
             
-            document.getElementById('reporteEfectivoTotal').textContent = `$${efectivoTotal.toFixed(2)}`;
-            document.getElementById('reporteCierres').textContent = `$${cierres.toFixed(2)}`;
-            document.getElementById('reporteRetiros').textContent = `$${retiros.toFixed(2)}`;
+            // Actualizar pagos recibidos por método
+            document.getElementById('pagosEfectivo').textContent = `$${pagosEfectivo.toFixed(2)}`;
+            document.getElementById('pagosTransferencia').textContent = `$${pagosTransferencia.toFixed(2)}`;
+            document.getElementById('totalPagosRecibidos').textContent = `$${totalPagos.toFixed(2)}`;
+            document.getElementById('reportePagosTotal').textContent = `$${totalPagos.toFixed(2)}`;
+            document.getElementById('reporteEfectivoTotal').textContent = `$${efectivoTotalIngresado.toFixed(2)}`;
             
             mostrarAlerta(`Reportes generados para el período ${fechaInicio} - ${fechaFin}`, 'success');
         }
@@ -1762,8 +1838,16 @@
             const hoy = new Date();
             const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
             
+            // Establecer el inicio del mes actual
             document.getElementById('fechaInicio').value = inicioMes.toISOString().split('T')[0];
             document.getElementById('fechaFin').value = hoy.toISOString().split('T')[0];
+            
+            // Generar reportes automáticamente al inicializar
+            setTimeout(() => {
+                if (document.getElementById('reportes').classList.contains('active')) {
+                    generarReportes();
+                }
+            }, 1000);
         }
 
         function forzarRecargaDatos() {
@@ -1771,6 +1855,11 @@
             loadDataFromFirebase();
             mostrarAlerta('Datos recargados exitosamente', 'success');
         }
+
+        // Generar reportes automáticamente al cargar
+        setTimeout(() => {
+            inicializarFechas();
+        }, 2000);
 
         // Hacer la función disponible globalmente
         window.initializeApp = initializeApp;
