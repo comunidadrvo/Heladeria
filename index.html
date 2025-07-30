@@ -440,6 +440,10 @@
             
             <input type="text" class="search-box" placeholder="🔍 Buscar cliente..." onkeyup="filtrarDeudas(this.value)">
             
+            <button class="btn btn-warning" onclick="forzarRecargaDatos()" style="margin-bottom: 20px;">
+                🔄 Recargar Datos (Debug)
+            </button>
+            
             <div class="total-box">
                 <h3>Total en Deudas</h3>
                 <div class="amount" id="totalDeudas">$0.00</div>
@@ -864,7 +868,10 @@
             
             // Actualizar datos cuando se cambia de sección
             if (sectionName === 'ventas') actualizarResumenVentas();
-            if (sectionName === 'creditos') cargarDeudas();
+            if (sectionName === 'creditos') {
+                forzarRecargaDatos();
+                cargarDeudas();
+            }
             if (sectionName === 'pedidos') cargarPedidos();
             if (sectionName === 'caja') actualizarCaja();
             if (sectionName === 'clientes') cargarClientes();
@@ -922,12 +929,16 @@
 
                     if (metodoPagoSeleccionado === 'credito') {
                         updatedCliente.deuda = (cliente.deuda || 0) + monto;
-                        
-                        // No necesitamos crear registro separado en deudas, 
-                        // solo actualizar el cliente
+                        console.log('Actualizando deuda del cliente:', cliente.nombre, 'Nueva deuda:', updatedCliente.deuda);
                     }
 
-                    window.firebaseSet(clienteRef, updatedCliente);
+                    window.firebaseSet(clienteRef, updatedCliente).then(() => {
+                        console.log('Cliente actualizado exitosamente');
+                        // Forzar recarga de deudas después de actualizar
+                        setTimeout(() => {
+                            cargarDeudas();
+                        }, 500);
+                    });
                 }
             });
 
@@ -960,15 +971,24 @@
 
         // Funciones de créditos y deudas
         function cargarDeudas() {
+            console.log('Cargando deudas...');
+            console.log('Clientes disponibles:', db.clientes);
+            
             const tbody = document.querySelector('#tablaDeudas tbody');
             tbody.innerHTML = '';
             
             let totalDeudas = 0;
+            let clientesConDeuda = 0;
             
             // Buscar todos los clientes con deuda > 0
             Object.values(db.clientes).forEach(cliente => {
-                if (cliente.deuda > 0) {
+                console.log(`Cliente: ${cliente.nombre}, Deuda: ${cliente.deuda || 0}`);
+                
+                if (cliente.deuda && cliente.deuda > 0) {
                     totalDeudas += cliente.deuda;
+                    clientesConDeuda++;
+                    
+                    console.log('Cliente con deuda encontrado:', cliente.nombre, cliente.deuda);
                     
                     const row = tbody.insertRow();
                     row.innerHTML = `
@@ -983,7 +1003,19 @@
                 }
             });
             
+            console.log('Total deudas:', totalDeudas);
+            console.log('Clientes con deuda:', clientesConDeuda);
+            
             document.getElementById('totalDeudas').textContent = `$${totalDeudas.toFixed(2)}`;
+            
+            if (clientesConDeuda === 0) {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td colspan="4" style="text-align: center; color: #666; padding: 20px;">
+                        No hay deudas registradas
+                    </td>
+                `;
+            }
         }
 
         function filtrarDeudas(busqueda) {
@@ -1584,6 +1616,21 @@
             
             document.getElementById('fechaInicio').value = inicioMes.toISOString().split('T')[0];
             document.getElementById('fechaFin').value = hoy.toISOString().split('T')[0];
+        }
+
+        function forzarRecargaDatos() {
+            console.log('Forzando recarga de datos...');
+            
+            // Recargar clientes
+            const clientesRef = window.firebaseRef(window.firebaseDatabase, 'clientes');
+            window.firebaseGet(clientesRef).then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    db.clientes = data;
+                    console.log('Clientes recargados:', db.clientes);
+                    cargarDeudas();
+                }
+            });
         }
 
         // Hacer la función disponible globalmente
