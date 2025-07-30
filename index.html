@@ -644,6 +644,7 @@
                         <th>Deuda Actual</th>
                         <th>Total Compras</th>
                         <th>Última Compra</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -773,6 +774,11 @@
                 const data = snapshot.val();
                 db.ventas = data || {};
                 actualizarResumenVentas();
+                
+                // Actualizar reportes si está activa esa sección
+                if (document.getElementById('reportes').classList.contains('active')) {
+                    setTimeout(generarReportes, 100);
+                }
             });
 
             // Cargar clientes
@@ -915,19 +921,10 @@
                     };
 
                     if (metodoPagoSeleccionado === 'credito') {
-                        updatedCliente.deuda = cliente.deuda + monto;
+                        updatedCliente.deuda = (cliente.deuda || 0) + monto;
                         
-                        // Crear o actualizar deuda
-                        const deudaRef = window.firebaseRef(window.firebaseDatabase, `deudas/${clienteId}`);
-                        const nuevaDeuda = {
-                            id: clienteId,
-                            clienteId: clienteId,
-                            clienteNombre: cliente.nombre,
-                            montoTotal: updatedCliente.deuda,
-                            ultimaVenta: new Date().toLocaleDateString('es-ES'),
-                            fecha: new Date().toISOString()
-                        };
-                        window.firebaseSet(deudaRef, nuevaDeuda);
+                        // No necesitamos crear registro separado en deudas, 
+                        // solo actualizar el cliente
                     }
 
                     window.firebaseSet(clienteRef, updatedCliente);
@@ -968,16 +965,16 @@
             
             let totalDeudas = 0;
             
-            Object.values(db.deudas).forEach(deuda => {
-                const cliente = db.clientes[deuda.clienteId];
-                if (cliente && cliente.deuda > 0) {
+            // Buscar todos los clientes con deuda > 0
+            Object.values(db.clientes).forEach(cliente => {
+                if (cliente.deuda > 0) {
                     totalDeudas += cliente.deuda;
                     
                     const row = tbody.insertRow();
                     row.innerHTML = `
                         <td>${cliente.nombre}</td>
                         <td>$${cliente.deuda.toFixed(2)}</td>
-                        <td>${deuda.ultimaVenta}</td>
+                        <td>${cliente.ultimaCompra || 'N/A'}</td>
                         <td>
                             <button class="btn btn-success" onclick="abrirModalDeuda('${cliente.id}')">💰 Pagar</button>
                             <button class="btn btn-danger" onclick="eliminarDeuda('${cliente.id}')">🗑️ Eliminar</button>
@@ -1538,9 +1535,32 @@
                             <td>$${cliente.deuda.toFixed(2)}</td>
                             <td>$${cliente.totalCompras.toFixed(2)}</td>
                             <td>${cliente.ultimaCompra || 'Nunca'}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="eliminarCliente('${cliente.id}')">🗑️ Eliminar</button>
+                            </td>
                         `;
                     }
                 });
+            }
+        }
+
+        function eliminarCliente(clienteId) {
+            const cliente = db.clientes[clienteId];
+            
+            if (cliente.deuda > 0) {
+                mostrarAlerta('No se puede eliminar un cliente con deuda pendiente', 'error');
+                return;
+            }
+            
+            if (confirm(`¿Está seguro de que desea eliminar al cliente ${cliente.nombre}?`)) {
+                const clienteRef = window.firebaseRef(window.firebaseDatabase, `clientes/${clienteId}`);
+                window.firebaseRemove(clienteRef);
+                
+                // También eliminar cualquier registro de deuda
+                const deudaRef = window.firebaseRef(window.firebaseDatabase, `deudas/${clienteId}`);
+                window.firebaseRemove(deudaRef);
+                
+                mostrarAlerta('Cliente eliminado exitosamente', 'success');
             }
         }
 
@@ -1568,6 +1588,11 @@
 
         // Hacer la función disponible globalmente
         window.initializeApp = initializeApp;
+
+        // Actualizar reportes automáticamente si estamos en esa sección
+        if (document.getElementById('reportes').classList.contains('active')) {
+            generarReportes();
+        }
     </script>
 </body>
 </html>
