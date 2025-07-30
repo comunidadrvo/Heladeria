@@ -735,6 +735,16 @@
             setupEventListeners();
             loadDataFromFirebase();
             inicializarFechas();
+            
+            // Inicializar estado del botón de crédito
+            setTimeout(() => {
+                const creditoBtn = document.querySelector('.payment-btn[onclick="selectPayment(\'credito\')"]');
+                if (creditoBtn) {
+                    creditoBtn.style.opacity = '0.5';
+                    creditoBtn.style.pointerEvents = 'none';
+                    creditoBtn.innerHTML = '🚫<br><strong>Crédito</strong><br><small>(Solo clientes registrados)</small>';
+                }
+            }, 1000);
         }
 
         // Configurar event listeners
@@ -873,6 +883,12 @@
                 return;
             }
 
+            // Validar que para crédito se requiere cliente registrado
+            if (metodoPagoSeleccionado === 'credito' && clienteId === 'general') {
+                mostrarAlerta('Para ventas a crédito debe seleccionar un cliente registrado', 'error');
+                return;
+            }
+
             const venta = {
                 id: Date.now().toString(),
                 clienteId: clienteId,
@@ -901,30 +917,17 @@
                     if (metodoPagoSeleccionado === 'credito') {
                         updatedCliente.deuda = cliente.deuda + monto;
                         
-                        // Agregar a deudas
-                        const deudaId = clienteId;
-                        const deudaRef = window.firebaseRef(window.firebaseDatabase, `deudas/${deudaId}`);
-                        window.firebaseGet(deudaRef).then((deudaSnapshot) => {
-                            const deudaExistente = deudaSnapshot.val();
-                            if (deudaExistente) {
-                                const updatedDeuda = {
-                                    ...deudaExistente,
-                                    montoTotal: deudaExistente.montoTotal + monto,
-                                    ultimaVenta: new Date().toLocaleDateString('es-ES')
-                                };
-                                window.firebaseSet(deudaRef, updatedDeuda);
-                            } else {
-                                const newDeuda = {
-                                    id: deudaId,
-                                    clienteId: clienteId,
-                                    clienteNombre: cliente.nombre,
-                                    montoTotal: monto,
-                                    ultimaVenta: new Date().toLocaleDateString('es-ES'),
-                                    fecha: new Date().toISOString()
-                                };
-                                window.firebaseSet(deudaRef, newDeuda);
-                            }
-                        });
+                        // Crear o actualizar deuda
+                        const deudaRef = window.firebaseRef(window.firebaseDatabase, `deudas/${clienteId}`);
+                        const nuevaDeuda = {
+                            id: clienteId,
+                            clienteId: clienteId,
+                            clienteNombre: cliente.nombre,
+                            montoTotal: updatedCliente.deuda,
+                            ultimaVenta: new Date().toLocaleDateString('es-ES'),
+                            fecha: new Date().toISOString()
+                        };
+                        window.firebaseSet(deudaRef, nuevaDeuda);
                     }
 
                     window.firebaseSet(clienteRef, updatedCliente);
@@ -1401,6 +1404,7 @@
             
             const inicio = new Date(fechaInicio);
             const fin = new Date(fechaFin);
+            fin.setHours(23, 59, 59, 999); // Incluir todo el día final
             
             // Filtrar datos por fechas
             const ventasFiltradas = Object.values(db.ventas).filter(v => {
@@ -1426,7 +1430,7 @@
             
             // Calcular deudas y pagos
             const totalPagos = pagosFiltrados.reduce((sum, p) => sum + p.monto, 0);
-            const deudasActivas = Object.values(db.clientes).reduce((sum, c) => sum + c.deuda, 0);
+            const deudasActivas = Object.values(db.clientes).reduce((sum, c) => sum + (c.deuda || 0), 0);
             
             // Calcular cierres
             const cierres = retirosFiltrados.filter(r => r.tipo === 'cierre').reduce((sum, r) => sum + r.monto, 0);
@@ -1444,7 +1448,7 @@
             document.getElementById('reporteCierres').textContent = `$${cierres.toFixed(2)}`;
             document.getElementById('reporteRetiros').textContent = `$${retiros.toFixed(2)}`;
             
-            mostrarAlerta('Reportes generados exitosamente', 'success');
+            mostrarAlerta(`Reportes generados para el período ${fechaInicio} - ${fechaFin}`, 'success');
         }
 
         // Funciones de clientes
@@ -1494,6 +1498,29 @@
                     option.value = cliente.id;
                     option.textContent = cliente.nombre;
                     selectVentas.appendChild(option);
+                }
+            });
+
+            // Agregar event listener para controlar métodos de pago
+            selectVentas.addEventListener('change', function() {
+                const creditoBtn = document.querySelector('.payment-btn[onclick="selectPayment(\'credito\')"]');
+                if (this.value === 'general') {
+                    // Deshabilitar crédito para cliente general
+                    creditoBtn.style.opacity = '0.5';
+                    creditoBtn.style.pointerEvents = 'none';
+                    creditoBtn.innerHTML = '🚫<br><strong>Crédito</strong><br><small>(Solo clientes registrados)</small>';
+                    
+                    // Si estaba seleccionado crédito, cambiar a efectivo
+                    if (metodoPagoSeleccionado === 'credito') {
+                        selectPayment('efectivo');
+                        document.querySelectorAll('.payment-btn')[0].classList.add('selected');
+                        creditoBtn.classList.remove('selected');
+                    }
+                } else {
+                    // Habilitar crédito para clientes registrados
+                    creditoBtn.style.opacity = '1';
+                    creditoBtn.style.pointerEvents = 'auto';
+                    creditoBtn.innerHTML = '📝<br><strong>Crédito</strong>';
                 }
             });
             
